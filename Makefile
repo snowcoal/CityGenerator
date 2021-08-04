@@ -1,4 +1,4 @@
-EXENAME = CityGenerator.exe
+EXENAME = CityGenerator
 OBJS = main.o City.o House.o PNG.o HSLAPixel.o lodepng.o
 #OUTPUTMSG = Maked files i guess
 

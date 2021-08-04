@@ -13,6 +13,7 @@
 #define  GRID_SPACE             1
 #define  WHITE_PX_LUM           1
 #define  BLACK_PX_LUM           0
+#define  OUTER_RD_PCT           0.8
 
 using namespace PNGimage;
 using namespace std;
