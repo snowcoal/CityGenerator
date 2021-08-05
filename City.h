@@ -9,11 +9,15 @@
 #include "PNGimage/PNG.h"
 #include "PNGimage/HSLAPixel.h"
 
-#define  PX_PERCENTAGE          0.5
+#define  PX_PCT                 0.5
 #define  GRID_SPACE             1
 #define  WHITE_PX_LUM           1
 #define  BLACK_PX_LUM           0
-#define  OUTER_RD_PCT           0.8
+#define  OUTER_RD_PCT           0.9
+#define  NUM_ADJ                8.0
+#define  SEED                   69420
+#define  HEIGHT_PCT             0.3
+#define  NUM_BUCKETS            5.0
 
 using namespace PNGimage;
 using namespace std;
@@ -44,18 +48,25 @@ class City
             int32_t pos_y;
             // tracks whether the current node is in the city or not
             int32_t inCity;
-            // tracks whether the current node is a road or not
-            int32_t isRoad;
-            // // tracks whether the current node is a space or not
-            // int32_t isSpace;
+            // tracks the type of the cell
+            // 0 = house, 1 = road, 2 = cliff
+            int32_t type;
+            // average luminance of heightmap under cell
+            double avg_lum;
         };
 
         // // position of corner of city in the final map (might not be needed)
         // int32_t start_x;
         // int32_t start_z;
 
+        // number of cells in city
+        int32_t cell_cnt;
+
         // input image pointer
         PNG* input_img;
+
+        // heightmap input pointer
+        PNG* heightmap_img;
 
         // length and width of the city
         int32_t cityWidth;
@@ -73,17 +84,23 @@ class City
         // grid is made up of nxn squares with a border of 1 square around the entire image
         vector<vector<gridCell*>> grid;
 
+        // list of all gridcell pointers in the city
+        list<gridCell*> cityCells;
+
         // list of houses
         list<House*> houseList;
 
-        // prints out the grid
-        void PrintGrid();
+        // generates random True/False with given distribution
+        bool randTF(int32_t dist);
 
-        // generates the maze of the city
-        void GenerateMaze();
+        // initializes stuff for constructors
+        void init(PNG* input, int32_t grid_box_width);
 
-        // // sets the maze height to the input heightmap (angles over some limit become dropoffs)
-        // void SetCityHeight();
+        // sets the maze height to the input heightmap (angles over some limit become dropoffs)
+        void setCityHeight();
+
+        // generates the road "maze" of the city
+        void generateRoads();
 
         // // distorts the city (different architecture needed?)
         // void DistortCity();
@@ -99,12 +116,14 @@ class City
         // void PlaceHouses();
 
     public:
-        // Constructor - input will need to be heightmap and heightmap with marked areas for city
-        // City nodes will need to be found and placed into the grid
-        City(PNG input_img, int32_t grid_box_width);
+        // constructor for heightmap
+        City(PNG* input_img, PNG* heightmap, int32_t grid_box_width);
 
-        // // Copy constructor (probably not needed)
-        // City();
+        // constructor for no heightmap
+        City(PNG* input_img, int32_t grid_box_width);
+
+        // prints out the grid
+        void printGrid();
 
         // Destructor
         ~City();

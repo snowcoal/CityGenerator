@@ -14,8 +14,12 @@ int main(){
     PNG input;
     input.readFromFile("input.png");
 
-    City city(input, 11);
+    // PNG heightmap;
+    // heightmap.readFromFile("heightmap.png");
 
-    // output.writeToFile("output.png");
+    // City city(&input, &heightmap, 11);
+    City city(&input, 11);
+
+    city.printGrid();
     return 0;
 }
