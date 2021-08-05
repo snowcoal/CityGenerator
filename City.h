@@ -33,6 +33,9 @@ class City
         // node of city grid
         struct gridCell
         {
+            // positions of node in grid
+            int32_t i_index;
+            int32_t j_index;
             // positions of node (0-based from top left corner of input image)
             // <---x--->
             /*
@@ -46,13 +49,13 @@ class City
             int32_t pos_z;
             // vertical height - top left corner has y=0
             int32_t pos_y;
-            // tracks whether the current node is in the city or not
-            int32_t inCity;
             // tracks the type of the cell
-            // 0 = house, 1 = road, 2 = cliff
+            // 0 = none, 1 = road, 2 = house, 3 = border, 4 = cliff
             int32_t type;
-            // average luminance of heightmap under cell
-            double avg_lum;
+            // tracks whether the current node is in the city or not
+            bool inCity;
+            // marks if visited for maze generator
+            bool visited;
         };
 
         // // position of corner of city in the final map (might not be needed)
@@ -90,9 +93,6 @@ class City
         // list of houses
         list<House*> houseList;
 
-        // generates random True/False with given distribution
-        bool randTF(int32_t dist);
-
         // initializes stuff for constructors
         void init(PNG* input, int32_t grid_box_width);
 
@@ -101,6 +101,12 @@ class City
 
         // generates the road "maze" of the city
         void generateRoads();
+
+        // generates random True/False with given distribution
+        bool randTF(int32_t dist);
+
+        // gets 4 adjacent neighbors
+        list<gridCell*>* get4Neighbors(gridCell* cell);
 
         // // distorts the city (different architecture needed?)
         // void DistortCity();
