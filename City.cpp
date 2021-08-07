@@ -52,8 +52,8 @@ void City::init(PNG* input, int32_t grid_box_width)
     grid_cell_size = grid_box_width;
     cell_cnt = 0;
     // add outer edge of grid cells around original image
-    gridWidth = cityWidth/(grid_cell_size + GRID_SPACE) + 2;
-    gridLength = cityLength/(grid_cell_size + GRID_SPACE) + 2;
+    gridWidth = cityWidth/(grid_cell_size + GRID_SPACE) + 4;
+    gridLength = cityLength/(grid_cell_size + GRID_SPACE) + 4;
     // get area of cell and space
     int grid_cell_area = pow(grid_cell_size,2);
 
@@ -114,8 +114,8 @@ void City::init(PNG* input, int32_t grid_box_width)
 
     // set the type of each cell prior to maze generation
     // uses "brute force edge detection"
-    for(int i = 1; i < gridLength - 1; i++){
-        for(int j = 1; j < gridWidth - 1; j++){
+    for(int i = 2; i < gridLength - 2; i++){
+        for(int j = 2; j < gridWidth - 2; j++){
             gridCell* cell = grid[i][j];
             if(cell->inCity){
                 // count 8 surrounding cells 
@@ -136,14 +136,19 @@ void City::init(PNG* input, int32_t grid_box_width)
                 // set it as a border if enough of its surrounding cells are in the city
                 if((double)(edge_cnt-1) / NUM_ADJ < OUTER_RD_PCT){
                     cell->type = 3;
+                    cell->visited = true;
                 }
                 // set it as a cliff if enough surrounding cells are different height
                 else if((double)(height_cnt) / NUM_ADJ > HEIGHT_PCT){
                     cell->type = 4;
                 }
-                // otherwise set it as a house
-                else{
+                // set it as a house if it has an odd position
+                else if(!(i%2 == 0 && j%2 == 0)){
                     cell->type = 2;
+                }
+                // finally set it as a road
+                else{
+                    cell->type = 1;
                 }
             }
         }
@@ -191,25 +196,63 @@ void City::setCityHeight()
 * generateRoads
 *
 * generates maze of roads inside city where cliffs dont exsist
+* returns 0 on success, -1 on failure
 *
 */
-void City::generateRoads()
+int32_t City::generateRoads()
 {
-    // stack<gridCell*> frontier;
-    // frontier.push(cityCells.front());
-    // cityCells.front()->visited = true;
+    // choose initial cell
+    gridCell* initial = NULL;
+    for(auto cell: cityCells){
+        // find first road cell and break
+        if(cell->type == 1){
+            initial = cell;
+            break;
+        }
+    }
+    // if no initial cell is found, return -1
+    if(initial == NULL){
+        return -1;
+    }
 
-    // while(frontier.size != 0){
-    //     gridCell* cur = frontier.top();
-    //     frontier.pop();
+    // mark inital as visited and push to stack
+    stack<gridCell*> frontier;
+    frontier.push(initial);
+    initial->visited = true;
 
-    //     list<gridCell*>* neighbors = get4Neighbors(cur);
-    //     for(auto: cell: *neighbors){
-    //         if(!(cell->visited)){
-                
-    //         }
-    //     }
-    // }
+    while(frontier.size() != 0){
+        // current cell is top of stack
+        gridCell* cur = frontier.top();
+        frontier.pop();
+
+        // if current has a neighbor
+        gridCell* n = pickRandNeighbor(cur, 80);
+        if(n != NULL){
+            // push current to stack
+            frontier.push(cur);
+
+            // set wall between them to a road
+            int32_t i_diff = (n->i_index - cur->i_index) >> 1;
+            int32_t j_diff = (n->j_index - cur->j_index) >> 1;
+            grid[cur->i_index + i_diff][cur->j_index + j_diff]->type = 1;
+            //grid[cur->i_index + i_diff][cur->j_index + j_diff]->visited = true;
+
+            // mark neighbor as visited and push it to stack
+            n->visited = true;
+            frontier.push(n);
+        }
+    }
+    // return success
+    return 0;
+
+    // Choose the initial cell, mark it as visited and push it to the stack
+    //     While the stack is not empty
+    //         Pop a cell from the stack and make it a current cell
+    //         If the current cell has any neighbours which have not been visited
+    //             Push the current cell to the stack
+    //             Choose one of the unvisited neighbours
+    //             Remove the wall between the current cell and the chosen cell
+    //             Mark the chosen cell as visited and push it to the stack
 
     // generate a maze on all points that are inCity
     // do BFS for each node
@@ -236,20 +279,60 @@ bool City::randTF(int32_t dist)
 }
 
 /*
-* get4Neighbors
+* pickRandNeighbor
 *
-* given input cell, gets 4 adjacent neighbors
-* output needs to be freed later
+* given input cell, picks random neighboring adjacent cell
+* that has not been visited. Used by maze generator.
+* neighboring cell HAS to be 2 spaces away
 *
+* input lrbias is left/right bias as opposed to up/down
+* 
+* returns null if cell has no unvisited neighbors
 */
-std::list<City::gridCell*>* City::get4Neighbors(gridCell* cell)
+City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
 {
-    list<gridCell*>* output = new list<gridCell*>;
-    // hardcoded adjacent cells
-    output->push_back(grid[cell->i_index][cell->j_index+1]);
-    output->push_back(grid[cell->i_index][cell->j_index-1]);
-    output->push_back(grid[cell->i_index+1][cell->j_index]);
-    output->push_back(grid[cell->i_index-1][cell->j_index]);
+    vector<gridCell*> cells(4);
+    uint32_t order;
+    gridCell* output = NULL;
+    // right/left
+    cells[0] = grid[cell->i_index][cell->j_index+2];
+    cells[1] = grid[cell->i_index][cell->j_index-2];
+    // down/up
+    cells[2] = grid[cell->i_index+2][cell->j_index];
+    cells[3] = grid[cell->i_index-2][cell->j_index];
+
+    // if true then left/right comes first
+    bool lr = randTF(lrbias);
+    // if true then plus comes first
+    bool plus = randTF(50);
+
+    /*  lr  p | 1st | 2nd | 3rd | 4th | bin encode  | hex
+    * --------|-----|-----|-----|-----|-------------|------
+    *    0  0 |  3  |  2  |  1  |  0  | 11 10 01 00 | 0xe4
+    *    0  1 |  2  |  3  |  0  |  1  | 10 11 00 01 | 0xb1
+    *    1  0 |  1  |  0  |  3  |  2  | 01 00 11 10 | 0x4e
+    *    1  1 |  0  |  1  |  2  |  3  | 00 01 10 11 | 0x1b
+    */
+
+    // set the order according to the above table
+    if(!lr && !plus) order = 0xe4;
+    else if(!lr && plus) order = 0xb1;
+    else if(lr && !plus) order = 0x4e;
+    else order = 0x1b;
+    //std::cout<<order<<std::endl;
+    for(int n = 3; n >= 0; n--){
+        // do only if cell is a road and is not visited
+        if(!(cells[n]->visited) && cells[n]->type == 1){
+            // update output
+            output = cells[(order >> (3-n)*2) & BITMASK];
+        }
+    }
+
+    // sanity check
+    if(output != NULL){
+        assert(output->type == 1 && !(output->visited));
+    }
+
     return(output);
 }
 

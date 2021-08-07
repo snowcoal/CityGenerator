@@ -18,6 +18,7 @@
 #define  SEED                   69420
 #define  HEIGHT_PCT             0.3
 #define  NUM_BUCKETS            5.0
+#define  BITMASK                0x03
 
 using namespace PNGimage;
 using namespace std;
@@ -100,13 +101,13 @@ class City
         void setCityHeight();
 
         // generates the road "maze" of the city
-        void generateRoads();
+        int32_t generateRoads();
 
         // generates random True/False with given distribution
         bool randTF(int32_t dist);
 
-        // gets 4 adjacent neighbors
-        list<gridCell*>* get4Neighbors(gridCell* cell);
+        // picks a random neighbor
+        gridCell* pickRandNeighbor(gridCell* cell, int32_t dist);
 
         // // distorts the city (different architecture needed?)
         // void DistortCity();
