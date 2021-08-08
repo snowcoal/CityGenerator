@@ -1,17 +1,14 @@
 EXENAME = CityGenerator
 OBJS = main.o City.o House.o PNG.o HSLAPixel.o lodepng.o
-#OUTPUTMSG = Maked files i guess
 
 CXX = clang++
-CXXFLAGS = $(CS225) -std=c++1y -stdlib=libc++ -c -g -O0 -Wall -Wextra -pedantic
+CXXFLAGS = -std=c++1y -stdlib=libc++ -c -g -O0 -Wall -Wextra -pedantic
 LD = clang++
 LDFLAGS = -std=c++1y -stdlib=libc++ -lc++abi -lm
 
-.PHONY: all test clean output_msg
+.PHONY: clean output_msg
 
 all : $(EXENAME)
-
-#output_msg: $(OUTPUTMSG)
 
 $(EXENAME) : output_msg $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) -o $(EXENAME)
@@ -40,7 +37,5 @@ HSLAPixel.o : PNGimage/HSLAPixel.cpp PNGimage/HSLAPixel.h
 lodepng.o : PNGimage/lodepng/lodepng.cpp PNGimage/lodepng/lodepng.h
 	$(CXX) $(CXXFLAGS) PNGimage/lodepng/lodepng.cpp
 
-.PHONY: output_msg
-
 clean :
-	-rm -f *.o $(EXENAME) test
+	-rm -f *.o
