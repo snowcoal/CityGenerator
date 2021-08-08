@@ -167,6 +167,7 @@ void City::init()
 
     // generate maze in city
     generateRoads();
+
 }
 
 /*
@@ -203,27 +204,12 @@ void City::setCityHeight()
         min_avg = min(min_avg, avg);
         // store average
         cell->avg_lum = avg;
-        // // add to sum
-        // avg_sum += avg;
     }
-    // // calcualte avg of avgs and std div of avgs
-    // double avg_avg = avg_sum / (double)cell_cnt;
-    // double sq_diff_sum = 0;
-
-    // for(auto cell: cityCells){
-    //     sq_diff_sum += pow(cell->avg_lum - avg_avg, 2);
-    // }
-    // double std_div = sqrt(sq_diff_sum / cell_cnt);
-
-    // // calculate z scores of min and max
-    // max_avg = (max_avg - avg_avg) / std_div;
-    // min_avg = (min_avg - avg_avg) / std_div;
 
     double range = max_avg - min_avg;
     // loop cells again and set yheights
     for(auto cell: cityCells){
         // scale average by range and truncate
-        // cell->pos_y = (int)floor((num_steps*((cell->avg_lum - avg_avg)/std_div - min_avg))/range);
         cell->pos_y = (int)floor((num_steps*(cell->avg_lum - min_avg))/range);
         // assertion check
         assert(cell->pos_y >= 0 && cell->pos_y <= num_steps);
@@ -264,7 +250,7 @@ int32_t City::generateRoads()
         frontier.pop();
 
         // if current has a neighbor
-        gridCell* n = pickRandNeighbor(cur, LRBIAS);
+        gridCell* n = pickRandNeighbor(cur, lrbias);
         if(n != NULL){
             // push current to stack
             frontier.push(cur);
@@ -317,12 +303,14 @@ City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
     // uint32_t order;
     int32_t row;
     gridCell* output = NULL;
+    int32_t i = cell->i_index;
+    int32_t j = cell->j_index;
     // right/left
-    cells[0] = grid[cell->i_index][cell->j_index+2];
-    cells[1] = grid[cell->i_index][cell->j_index-2];
+    cells[0] = grid[i][j+2];
+    cells[1] = grid[i][j-2];
     // down/up
-    cells[2] = grid[cell->i_index+2][cell->j_index];
-    cells[3] = grid[cell->i_index-2][cell->j_index];
+    cells[2] = grid[i+2][j];
+    cells[3] = grid[i-2][j];
 
     // if true then left/right comes first
     bool lr = randTF(lrbias);
@@ -351,6 +339,139 @@ City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
     }
 
     return(output);
+}
+
+/*
+* addRandomRoads
+*
+* adds random vertical/horizontal roads along the maze according to lrbias
+* makes house loops
+* connects extraneous houses together
+*
+* dist controls how many new roads get made
+*
+*/
+void City::addRandomRoads(int32_t dist)
+{
+
+    // add vertical roads if most of the roads are horizontal so far
+    if(lrbias > 50){
+        for(int j = 2; j < gridWidth - 2; j++){
+            // possibly skip entire column
+            // the closer lrbias is to 50, the more columns are skipped
+            if(!randTF((lrbias - 50)*2) || j%2 == 1){
+                continue;
+            }
+            for(int i = 2; i < gridLength - 2; i++){
+                gridCell* cell = grid[i][j];
+                if(cell->inCity && cell->type == 2 && randTF(dist)){
+                    cell->type = 1;
+                }
+            }
+        }
+    }
+
+    // add horizontal roads if most of the roads are vertical so far
+    else if(lrbias <= 50){
+        for(int i = 2; i < gridLength - 2; i++){
+            // possibly skip entire row
+            // the closer lrbias is to 50, the more rows are skipped
+            if(!randTF((50 - lrbias)*2) || i%2 == 1){
+                continue;
+            }
+            for(int j = 2; j < gridWidth - 2; j++){
+                gridCell* cell = grid[i][j];
+                if(cell->inCity && cell->type == 2 && randTF(dist)){
+                    cell->type = 1;
+                }
+            }
+        }
+    }
+
+    // add house loops
+    for(auto cell: cityCells){
+        int32_t i = cell->i_index;
+        int32_t j = cell->j_index;
+        int house_cnt = 0;
+
+        // loop outside cells of all road cells
+        if(cell->type == 1){
+            for(int k = -1; k <= 1; k++){
+                for(int l = -1; l <= 1; l++){
+                    if(grid[i+k][j+l]->type == 2 && !(k == 0 && l == 0)){
+                        house_cnt++;
+                    }
+                }
+            }
+        }
+        // check if theres exactly 7 houses and set any roads to houses
+        if(house_cnt == 7){
+            for(int k = -1; k <= 1; k++){
+                for(int l = -1; l <= 1; l++){
+                    if(grid[i+k][j+l]->type == 1 && !(k == 0 && l == 0)){
+                        grid[i+k][j+l]->type = 2;
+                    }
+                }
+            }
+        }
+    }
+
+    // connect adjacent extraneous houses together (brute force algorithm)
+    for(auto cell: cityCells){
+        // skip any non-house cells
+        if(cell->type != 2) continue;
+        int32_t i = cell->i_index;
+        int32_t j = cell->j_index;
+
+        bool break1 = false;
+        for(int k = -1; k <= 1; k++){
+            if(break1) break;
+            for(int l = -1; l <= 1; l++){
+                if(k == 0 && l == 0) continue;
+                // if any of them are not roads break all loops
+                if(grid[i+k][j+l]->type != 1){
+                    break1 = true;
+                }
+            }
+        }
+        // continue outer loop
+        if(break1) continue;
+
+        // if the cell is surrounded by roads, then check neighbors
+
+        vector<gridCell*> cells(4);
+        // right/left
+        cells[0] = grid[i][j+2];
+        cells[1] = grid[i][j-2];
+        // down/up
+        cells[2] = grid[i+2][j];
+        cells[3] = grid[i-2][j];
+
+        for(int n = 0; n < 4; n++){
+            // skip any non-house cells
+            if(cells[n]->type != 2) continue;
+
+            bool break2 = false;
+            for(int k = -1; k <= 1; k++){
+                if(break2) break;
+                for(int l = -1; l <= 1; l++){
+                    if(k == 0 && l == 0) continue;
+                    // if any of them are not roads break all loops
+                    if(grid[cells[n]->i_index+k][cells[n]->j_index+l]->type != 1){
+                        break2 = true;
+                    }
+                }
+            }
+            // continue outer loop
+            if(break2) continue;
+            // set cell between them to a house
+            else{
+                int32_t i_diff = (cells[n]->i_index - i) >> 1;
+                int32_t j_diff = (cells[n]->j_index - j) >> 1;
+                grid[i + i_diff][j + j_diff]->type = 2;
+            }
+        }
+    }
 }
 
 /*

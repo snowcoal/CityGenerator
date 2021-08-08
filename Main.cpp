@@ -18,7 +18,8 @@ int main(){
     heightmap.readFromFile("tests/input_heightmap.png");
 
     // no heightmap input
-    City city(&input, 11, 80);
+    City city(&input, 11, 100);
+    city.addRandomRoads(50);
     city.printGrid("tests/output.png");
 
     // yes heightmap input

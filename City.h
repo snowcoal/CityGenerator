@@ -31,6 +31,7 @@ using std::endl;
 #define  WHITE_PX_LUM           1
 #define  SEED                   69420
 #define  BITMASK                0x03
+#define  MAGIC                  69420
 
 // order array:
 /*  lr  p | 4th | 3rd | 2nd | 1st | bin encode  | hex
@@ -138,7 +139,7 @@ class City
 
         // // house stuff
 
-        // // loads houses into houseList
+        // // loads house info into houseList
         // void loadHouses();
 
         // // places houses into the city
@@ -155,6 +156,9 @@ class City
 
         // prints out the city grid to input file
         void printGrid(string const & filename);
+
+        // adds random roads along the maze
+        void addRandomRoads(int32_t dist);
 
         // Destructor
         ~City();
