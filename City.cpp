@@ -15,11 +15,17 @@ using namespace std;
 *
 * input_img - input PNG into constructor
 * grid_box_width - width of grid boxes
+* lr_bias - amount of bias to left/right vs up/down
 */
-City::City(PNG* input, int32_t grid_box_width)
+City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias)
 {
+    // init basic private variables
+    num_steps = 0;
     heightmap_img = NULL;
-    init(input, grid_box_width);
+    input_img = input;
+    grid_cell_size = grid_box_width;
+    lrbias = lr_bias;
+    init();
 }
 
 /*
@@ -28,28 +34,31 @@ City::City(PNG* input, int32_t grid_box_width)
 * input_img - input PNG into constructor
 * heightmap - heightmap input
 * grid_box_width - width of grid boxes
+* steps - number of discrete height levels that the output should have
+* lr_bias - amount of bias to left/right vs up/down
 */
-City::City(PNG* input, PNG* heightmap, int32_t grid_box_width)
+City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, int32_t steps)
 {
+    // init basic private variables
+    num_steps = (double)steps;
     heightmap_img = heightmap;
-    init(input, grid_box_width);
+    input_img = input;
+    grid_cell_size = grid_box_width;
+    lrbias = lr_bias;
+    init();
 }
 
 /*
-* Initialization function
-*
-* for both constructors
+* Initialization method for both constructors
 * 
 */
-void City::init(PNG* input, int32_t grid_box_width)
+void City::init()
 {
     // init seed for srand
     srand(SEED);
     // init basic private variables
-    cityWidth = input->width();
-    cityLength = input->height();
-    input_img = input;
-    grid_cell_size = grid_box_width;
+    cityWidth = input_img->width();
+    cityLength = input_img->height();
     cell_cnt = 0;
     // add outer edge of grid cells around original image
     gridWidth = cityWidth/(grid_cell_size + GRID_SPACE) + 4;
@@ -72,6 +81,8 @@ void City::init(PNG* input, int32_t grid_box_width)
             cell->i_index = i;
             cell->j_index = j;
             cell->visited = false;
+            cell->isCliff = false;
+            cell->avg_lum = 0;
             // cells default to none type
             cell->type = 0;
 
@@ -83,7 +94,7 @@ void City::init(PNG* input, int32_t grid_box_width)
                     // check if checked pixel is in bounds
                     if(k>=0 && l>=0 && k<cityWidth && l<cityLength){
                         // get the current pixel
-                        HSLAPixel & pixel = input->getPixel(k, l);
+                        HSLAPixel & pixel = input_img->getPixel(k, l);
                         // check whether the luminance value is equal to the white pixel
                         if((int32_t)pixel.l == WHITE_PX_LUM){
                             count++;
@@ -113,7 +124,7 @@ void City::init(PNG* input, int32_t grid_box_width)
     }
 
     // set the type of each cell prior to maze generation
-    // uses "brute force edge detection"
+    // uses "shitty edge detection"
     for(int i = 2; i < gridLength - 2; i++){
         for(int j = 2; j < gridWidth - 2; j++){
             gridCell* cell = grid[i][j];
@@ -133,14 +144,10 @@ void City::init(PNG* input, int32_t grid_box_width)
                         }
                     }
                 }
-                // set it as a border if enough of its surrounding cells are in the city
+                // set it as a border if less than some percentage of its surrounding cells are in the city
                 if((double)(edge_cnt-1) / NUM_ADJ < OUTER_RD_PCT){
                     cell->type = 3;
                     cell->visited = true;
-                }
-                // set it as a cliff if enough surrounding cells are different height
-                else if((double)(height_cnt) / NUM_ADJ > HEIGHT_PCT){
-                    cell->type = 4;
                 }
                 // set it as a house if it has an odd position
                 else if(!(i%2 == 0 && j%2 == 0)){
@@ -150,15 +157,16 @@ void City::init(PNG* input, int32_t grid_box_width)
                 else{
                     cell->type = 1;
                 }
+                // set it as a cliff if enough surrounding cells are different height and its not a border
+                if((double)(height_cnt) / NUM_ADJ > HEIGHT_PCT && cell->type != 3){
+                    cell->isCliff = true;
+                }
             }
         }
     }
 
-    generateRoads();
-
     // generate maze in city
-
-    // each list cell will have coords same as image pixel
+    generateRoads();
 }
 
 /*
@@ -170,6 +178,9 @@ void City::init(PNG* input, int32_t grid_box_width)
 void City::setCityHeight()
 {
     double grid_cell_area = (double)pow(grid_cell_size,2);
+    double max_avg = 0.0;
+    double min_avg = 1.0;
+    // double avg_sum = 0;
     // loop through city cells
     for(auto cell: cityCells){
         double lum_sum = 0.0;
@@ -187,8 +198,35 @@ void City::setCityHeight()
         }
         // calculate average
         double avg = lum_sum / grid_cell_area;
-        // scale average and truncate
-        cell->pos_y = (int)floor(NUM_BUCKETS*avg);
+        // set max and min averages
+        max_avg = max(max_avg, avg);
+        min_avg = min(min_avg, avg);
+        // store average
+        cell->avg_lum = avg;
+        // // add to sum
+        // avg_sum += avg;
+    }
+    // // calcualte avg of avgs and std div of avgs
+    // double avg_avg = avg_sum / (double)cell_cnt;
+    // double sq_diff_sum = 0;
+
+    // for(auto cell: cityCells){
+    //     sq_diff_sum += pow(cell->avg_lum - avg_avg, 2);
+    // }
+    // double std_div = sqrt(sq_diff_sum / cell_cnt);
+
+    // // calculate z scores of min and max
+    // max_avg = (max_avg - avg_avg) / std_div;
+    // min_avg = (min_avg - avg_avg) / std_div;
+
+    double range = max_avg - min_avg;
+    // loop cells again and set yheights
+    for(auto cell: cityCells){
+        // scale average by range and truncate
+        // cell->pos_y = (int)floor((num_steps*((cell->avg_lum - avg_avg)/std_div - min_avg))/range);
+        cell->pos_y = (int)floor((num_steps*(cell->avg_lum - min_avg))/range);
+        // assertion check
+        assert(cell->pos_y >= 0 && cell->pos_y <= num_steps);
     }
 }
 
@@ -226,7 +264,7 @@ int32_t City::generateRoads()
         frontier.pop();
 
         // if current has a neighbor
-        gridCell* n = pickRandNeighbor(cur, 80);
+        gridCell* n = pickRandNeighbor(cur, LRBIAS);
         if(n != NULL){
             // push current to stack
             frontier.push(cur);
@@ -244,22 +282,6 @@ int32_t City::generateRoads()
     }
     // return success
     return 0;
-
-    // Choose the initial cell, mark it as visited and push it to the stack
-    //     While the stack is not empty
-    //         Pop a cell from the stack and make it a current cell
-    //         If the current cell has any neighbours which have not been visited
-    //             Push the current cell to the stack
-    //             Choose one of the unvisited neighbours
-    //             Remove the wall between the current cell and the chosen cell
-    //             Mark the chosen cell as visited and push it to the stack
-
-    // generate a maze on all points that are inCity
-    // do BFS for each node
-    // use for loops to get 4 adjacent cells
-
-    // go straight with higher probability than left or right
-    // mark cells as roads as maze is generated
 }
 
 /*
@@ -292,7 +314,8 @@ bool City::randTF(int32_t dist)
 City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
 {
     vector<gridCell*> cells(4);
-    uint32_t order;
+    // uint32_t order;
+    int32_t row;
     gridCell* output = NULL;
     // right/left
     cells[0] = grid[cell->i_index][cell->j_index+2];
@@ -306,29 +329,23 @@ City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
     // if true then plus comes first
     bool plus = randTF(50);
 
-    /*  lr  p | 1st | 2nd | 3rd | 4th | bin encode  | hex
-    * --------|-----|-----|-----|-----|-------------|------
-    *    0  0 |  3  |  2  |  1  |  0  | 11 10 01 00 | 0xe4
-    *    0  1 |  2  |  3  |  0  |  1  | 10 11 00 01 | 0xb1
-    *    1  0 |  1  |  0  |  3  |  2  | 01 00 11 10 | 0x4e
-    *    1  1 |  0  |  1  |  2  |  3  | 00 01 10 11 | 0x1b
-    */
+    // find which row of the order table to use
+    if(!lr && !plus) row = 0;
+    else if(!lr && plus) row = 1;
+    else if(lr && !plus) row = 2;
+    else row = 3;
 
-    // set the order according to the above table
-    if(!lr && !plus) order = 0xe4;
-    else if(!lr && plus) order = 0xb1;
-    else if(lr && !plus) order = 0x4e;
-    else order = 0x1b;
-    //std::cout<<order<<std::endl;
-    for(int n = 3; n >= 0; n--){
+    for(int n = 0; n < 4; n++){
+        int index = ORDER_ARY[row*4 + n];
         // do only if cell is a road and is not visited
-        if(!(cells[n]->visited) && cells[n]->type == 1){
+        if(!(cells[index]->visited) && cells[index]->type == 1){
             // update output
-            output = cells[(order >> (3-n)*2) & BITMASK];
+            output = cells[index];
+            //std::cout<<index<<std::endl;
         }
     }
 
-    // sanity check
+    // assertion check
     if(output != NULL){
         assert(output->type == 1 && !(output->visited));
     }
@@ -339,17 +356,11 @@ City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
 /*
 * PrintGrid
 *
-* prints out the grid of the city to "output.png"
+* prints out the grid of the city to an input string
 *
 */
-void City::printGrid()
+void City::printGrid(string const & filename)
 {
-    HSLAPixel red_px(0.0,1.0,0.5);
-    HSLAPixel green_px(120,1.0,0.5);
-    HSLAPixel blue_px(240,1.0,0.5);
-    HSLAPixel orange_px(39,1.0,0.5);
-    HSLAPixel black_px(0,1.0,0.5);
-
     PNG input_cpy = (*input_img);
 
     // loop through cells
@@ -358,21 +369,19 @@ void City::printGrid()
         HSLAPixel color;
         switch (cell->type){
             case 0:
-                color = black_px;
+                color = BLK_PX;
                 break;
             case 1:
-                color = blue_px;
+                color = BLU_PX;
                 break;
             case 2:
-                color = red_px;
+                color = RED_PX;
                 break;
             case 3:
-                color = orange_px;
-                break;
-            case 4:
-                color = green_px;
+                color = OGE_PX;
                 break;
         }
+        if(cell->isCliff) color = GRN_PX;
         // loop through each pixel in the cell
         for(int k = cell->pos_x; k < cell->pos_x + grid_cell_size; k++){
             for(int l = cell->pos_z; l < cell->pos_z + grid_cell_size; l++){
@@ -385,7 +394,7 @@ void City::printGrid()
             }
         }
     }
-    input_cpy.writeToFile("output.png");
+    input_cpy.writeToFile(filename);
 }
 
 /*

@@ -12,14 +12,18 @@ using namespace std;
 
 int main(){
     PNG input;
-    input.readFromFile("input.png");
+    input.readFromFile("tests/input.png");
 
-    // PNG heightmap;
-    // heightmap.readFromFile("heightmap.png");
+    PNG heightmap;
+    heightmap.readFromFile("tests/input_heightmap.png");
 
-    // City city(&input, &heightmap, 11);
-    City city(&input, 11);
+    // no heightmap input
+    City city(&input, 11, 80);
+    city.printGrid("tests/output.png");
 
-    city.printGrid();
+    // yes heightmap input
+    City hcity(&input, 11, 20, &heightmap, 5);
+    hcity.printGrid("tests/output_heightmap.png");
+
     return 0;
 }
