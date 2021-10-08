@@ -17,14 +17,31 @@ int main(){
     PNG heightmap;
     heightmap.readFromFile("tests/input_heightmap.png");
 
+    // init seed for rand
+    srand(69420);
+
     // no heightmap input
-    City city(&input, 11, 100);
+    City city(&input, 11, 70);
     city.addRandomRoads(50);
+    city.PlaceHouses();
     city.printGrid("tests/output.png");
 
+    // no heightmap input
+    City city1(&input, 11, 70);
+    city1.PlaceHouses();
+    city1.printGrid("tests/output_maze.png");
+
+    // no heightmap input
+    City city2(&input, 11, 70);
+    city2.addRandomRoads(10);
+    city2.PlaceHouses();
+    city2.printGrid("tests/output2.png");
+    
     // yes heightmap input
     City hcity(&input, 11, 20, &heightmap, 5);
     hcity.printGrid("tests/output_heightmap.png");
+
+
 
     return 0;
 }

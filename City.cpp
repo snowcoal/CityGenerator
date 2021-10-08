@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <stack>
+#include <list>
 
 #include "City.h"
 #include "PNGimage/PNG.h"
@@ -54,8 +55,6 @@ City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, 
 */
 void City::init()
 {
-    // init seed for srand
-    srand(SEED);
     // init basic private variables
     cityWidth = input_img->width();
     cityLength = input_img->height();
@@ -83,6 +82,8 @@ void City::init()
             cell->visited = false;
             cell->isCliff = false;
             cell->avg_lum = 0;
+            cell->corner_type = -1;
+            cell->corner_rotation = -1;
             // cells default to none type
             cell->type = 0;
 
@@ -474,6 +475,157 @@ void City::addRandomRoads(int32_t dist)
     }
 }
 
+
+/*
+* placeHouses
+*
+* loads and places houses into city
+*
+*/
+void City::PlaceHouses()
+{
+    //STEP 1: SETUP
+
+    std::list<gridCell*> cornerCells;
+    // first sort out all corner gridcells
+    for(auto cell:cityCells){
+        // first check if its a house
+        if(cell->type == 2){
+            // for each of the 4 direct neighbors, check if house (could error if house right next to edge)
+            uint8_t n = 0x00;
+            // shift n then OR with left neighbor
+            n = ((n << 1) | ((grid[cell->i_index][cell->j_index - 1])->type == 2));
+            // do same thing with right neighbor
+            n = ((n << 1) | ((grid[cell->i_index][cell->j_index + 1])->type == 2));
+            // do same thing with top neighbor
+            n = ((n << 1) | ((grid[cell->i_index - 1][cell->j_index])->type == 2));
+            // do same thing with bottom neighbor
+            n = ((n << 1) | ((grid[cell->i_index + 1][cell->j_index])->type == 2));
+
+            // use giant fucking switch statemet to find rotation and type of every single house
+
+            // left|right|top|bottom
+            // 0 rot = "i, L, T, +", 1 rot = 90, 2 rot = 180, 3 rot = 270
+            // for non-corner houses: 0 rot = |----|, 1 rot = "I"
+            switch (n){
+                // no neighbors
+                case 0b00000000:
+                    cell->corner_type = 0;
+                    cell->corner_rotation = rand() % 3;
+                    cornerCells.push_front(cell);
+                    break;
+                // 1 neighbor
+                case 0b00000001:
+                    cell->corner_type = 1;
+                    cell->corner_rotation = 0;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00000010:
+                    cell->corner_type = 1;
+                    cell->corner_rotation = 2;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00000100:
+                    cell->corner_type = 1;
+                    cell->corner_rotation = 3;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00001000:
+                    cell->corner_type = 1;
+                    cell->corner_rotation = 1;
+                    cornerCells.push_front(cell);
+                    break;
+                // 2 neighbors no corner
+                case 0b00000011:
+                    cell->corner_type = -2;
+                    cell->corner_rotation = 1;
+                    break;
+                case 0b00001100:
+                    cell->corner_type = -2;
+                    cell->corner_rotation = 0;
+                    break;
+                // 2 neighbors yes corner
+                case 0b00000101:
+                    cell->corner_type = 2;
+                    cell->corner_rotation = 1;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00000110:
+                    cell->corner_type = 2;
+                    cell->corner_rotation = 0;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00001001:
+                    cell->corner_type = 2;
+                    cell->corner_rotation = 2;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00001010:
+                    cell->corner_type = 2;
+                    cell->corner_rotation = 3;
+                    cornerCells.push_front(cell);
+                    break;
+                // 3 neighbors
+                case 0b00000111:
+                    cell->corner_type = 3;
+                    cell->corner_rotation = 3;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00001011:
+                    cell->corner_type = 3;
+                    cell->corner_rotation = 1;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00001101:
+                    cell->corner_type = 3;
+                    cell->corner_rotation = 0;
+                    cornerCells.push_front(cell);
+                    break;
+                case 0b00001110:
+                    cell->corner_type = 3;
+                    cell->corner_rotation = 2;
+                    cornerCells.push_front(cell);
+                    break;
+                // 4 neighbors
+                case 0b00001111:
+                    cell->corner_type = 4;
+                    cell->corner_rotation = rand() % 3;
+                    cornerCells.push_front(cell);
+                    break;
+            }
+        }
+    }
+
+    // find all lines between corners
+
+    // find start, end, and direction of each line
+
+
+    //STEP 2: PLACEMENT
+
+    // first load all houses from csv
+
+    // assign random houses of same type to corners
+
+    // assign random houses to lines
+
+    // need to ensure the direction/rotation of each house is specified
+}
+
+
+// /*
+// * distortCity
+// *
+// * distorts the city by given percentage
+// *
+// * dist controls how much it gets distorted
+// *
+// */
+// void City::distortCity(int32_t dist)
+// {
+
+// }
+
 /*
 * PrintGrid
 *
@@ -489,18 +641,65 @@ void City::printGrid(string const & filename)
         // find color that cell should be
         HSLAPixel color;
         switch (cell->type){
+            // out of bounds
             case 0:
                 color = BLK_PX;
                 break;
+            // road
             case 1:
-                color = BLU_PX;
+                // color = BLU_PX;
+                color = BLK_PX;
                 break;
+            // house
             case 2:
                 color = RED_PX;
+                // switch (cell->corner_type){
+                //     case -2:
+                //         color = RED_PX;
+                //         break;
+                //     case 0:
+                //         color = RED_PX;
+                //         break;
+                //     case 1:
+                //         color = RED_PX;
+                //         break;
+                //     case 2:
+                //         color = RED_PX;
+                //         break;
+                //     case 3:
+                //         color = RED_PX;
+                //         break;
+                //     case 4:
+                //         color = BLU_PX;
+                //         break;
+                // }
+
+                // switch (cell->corner_rotation){
+                //     case 0:
+                //         color = RED_PX;
+                //         break;
+                //     case 1:
+                //         color = RED_PX;
+                //         break;
+                //     case 2:
+                //         color = RED_PX;
+                //         break;
+                //     case 3:
+                //         color = BLU_PX;
+                //         break;
+                //     default:
+                //         color = RED_PX;
+                //         break;
+                // }
                 break;
+            // border
             case 3:
                 color = OGE_PX;
                 break;
+            // // corner
+            // case 4:
+            //     color = BLU_PX;
+            //     break;
         }
         if(cell->isCliff) color = GRN_PX;
         // loop through each pixel in the cell

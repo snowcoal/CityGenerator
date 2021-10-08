@@ -29,9 +29,8 @@ using std::endl;
 // other:
 #define  GRID_SPACE             1
 #define  WHITE_PX_LUM           1
-#define  SEED                   69420
 #define  BITMASK                0x03
-#define  MAGIC                  69420
+#define  BITMASK2               0x01
 
 // order array:
 /*  lr  p | 4th | 3rd | 2nd | 1st | bin encode  | hex
@@ -48,7 +47,8 @@ const HSLAPixel RED_PX(0.0,1.0,0.5);
 const HSLAPixel GRN_PX(120,1.0,0.5);
 const HSLAPixel BLU_PX(240,1.0,0.5);
 const HSLAPixel OGE_PX(39,1.0,0.5);
-const HSLAPixel BLK_PX(0,1.0,0.5);
+const HSLAPixel BLK_PX(360,1.0,0.0);
+const HSLAPixel BRN_PX(18, 0.58, 0.25);
 
 class City
 {
@@ -68,6 +68,12 @@ class City
             // tracks the type of the cell
             // 0 = none, 1 = road, 2 = house, 3 = border
             int32_t type;
+            // -1 = unassigned, -2 = house between corners, 0 = no neighbors, 1 = "i", 2 = "L", 3 = "T", 4 = "+"
+            int32_t corner_type;
+            // 0 = "i L T +", 1 = 90 clockwise, 2 = 180 clockwise, 3 = 270 clockwise, -1 unassigned
+            // for non-corner houses: 0 rot = |----|, 1 rot = "I"
+            // "+" gets assigned random rotation value
+            int32_t corner_rotation;
             // tracks whether the current node is in the city or not
             bool inCity;
             // marks if visited for maze generator
@@ -134,18 +140,10 @@ class City
         // picks a random neighbor
         gridCell* pickRandNeighbor(gridCell* cell, int32_t dist);
 
-        // // distorts the city (different architecture needed?)
-        // void DistortCity();
-
         // // house stuff
 
         // // loads house info into houseList
         // void loadHouses();
-
-        // // places houses into the city
-        // // they need to be randomized
-        // // direction of "stick" needs to be tracked
-        // void PlaceHouses();
 
     public:
         // constructor for heightmap
@@ -159,6 +157,14 @@ class City
 
         // adds random roads along the maze
         void addRandomRoads(int32_t dist);
+
+        // places houses into the city
+        // they need to be randomized
+        // direction of "stick" needs to be tracked
+        void PlaceHouses();
+
+        // // distorts the city (different architecture needed?)
+        // void distortCity(int32_t dist);
 
         // Destructor
         ~City();
