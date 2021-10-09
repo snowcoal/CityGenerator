@@ -59,11 +59,19 @@ void City::init()
     cityWidth = input_img->width();
     cityLength = input_img->height();
     cell_cnt = 0;
+    placeHousesCalled = false;
     // add outer edge of grid cells around original image
     gridWidth = cityWidth/(grid_cell_size + GRID_SPACE) + 4;
     gridLength = cityLength/(grid_cell_size + GRID_SPACE) + 4;
     // get area of cell and space
     int grid_cell_area = pow(grid_cell_size,2);
+
+    // allocate various lists
+    list<list<gridCell*>*>* l1 = new list<list<gridCell*>*>;
+    lineList = l1;
+
+    list<gridCell*>* l2 = new list<gridCell*>;
+    cityCells = l2;
 
     // init grid cells
     for(int i = 0; i < gridLength; i++){
@@ -81,6 +89,7 @@ void City::init()
             cell->j_index = j;
             cell->visited = false;
             cell->isCliff = false;
+            cell->visitedLine = false;
             cell->avg_lum = 0;
             cell->corner_type = -1;
             cell->corner_rotation = -1;
@@ -109,7 +118,7 @@ void City::init()
                 cell->inCity = true;
                 cell_cnt++;
                 // add cell to list
-                cityCells.push_back(cell);
+                cityCells->push_back(cell);
             }
             else{
                 cell->inCity = false;
@@ -184,7 +193,7 @@ void City::setCityHeight()
     double min_avg = 1.0;
     // double avg_sum = 0;
     // loop through city cells
-    for(auto cell: cityCells){
+    for(auto cell: *cityCells){
         double lum_sum = 0.0;
         // loop through pixels in cell
         for(int k = cell->pos_x; k < cell->pos_x + grid_cell_size; k++){
@@ -209,7 +218,7 @@ void City::setCityHeight()
 
     double range = max_avg - min_avg;
     // loop cells again and set yheights
-    for(auto cell: cityCells){
+    for(auto cell: *cityCells){
         // scale average by range and truncate
         cell->pos_y = (int)floor((num_steps*(cell->avg_lum - min_avg))/range);
         // assertion check
@@ -228,7 +237,7 @@ int32_t City::generateRoads()
 {
     // choose initial cell
     gridCell* initial = NULL;
-    for(auto cell: cityCells){
+    for(auto cell: *cityCells){
         // find first road cell and break
         if(cell->type == 1){
             initial = cell;
@@ -354,7 +363,10 @@ City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
 */
 void City::addRandomRoads(int32_t dist)
 {
-
+    if(placeHousesCalled){
+        cout<<"ERROR: addRandomRoads() cannot be called after placeHouses()!"<<endl;
+        return;
+    }
     // add vertical roads if most of the roads are horizontal so far
     if(lrbias > 50){
         for(int j = 2; j < gridWidth - 2; j++){
@@ -390,7 +402,7 @@ void City::addRandomRoads(int32_t dist)
     }
 
     // add house loops
-    for(auto cell: cityCells){
+    for(auto cell: *cityCells){
         int32_t i = cell->i_index;
         int32_t j = cell->j_index;
         int house_cnt = 0;
@@ -418,7 +430,7 @@ void City::addRandomRoads(int32_t dist)
     }
 
     // connect adjacent extraneous houses together (brute force algorithm)
-    for(auto cell: cityCells){
+    for(auto cell: *cityCells){
         // skip any non-house cells
         if(cell->type != 2) continue;
         int32_t i = cell->i_index;
@@ -482,13 +494,19 @@ void City::addRandomRoads(int32_t dist)
 * loads and places houses into city
 *
 */
-void City::PlaceHouses()
+void City::placeHouses()
 {
+    if(placeHousesCalled){
+        cout<<"ERROR: placeHouses() cannot be called more than once!"<<endl;
+        return;
+    }
     //STEP 1: SETUP
+    placeHousesCalled = true;
 
-    std::list<gridCell*> cornerCells;
+    list<gridCell*> cornerCells;
+    list<gridCell*> lineCells;
     // first sort out all corner gridcells
-    for(auto cell:cityCells){
+    for(auto cell: *cityCells){
         // first check if its a house
         if(cell->type == 2){
             // for each of the 4 direct neighbors, check if house (could error if house right next to edge)
@@ -506,100 +524,153 @@ void City::PlaceHouses()
 
             // left|right|top|bottom
             // 0 rot = "i, L, T, +", 1 rot = 90, 2 rot = 180, 3 rot = 270
-            // for non-corner houses: 0 rot = |----|, 1 rot = "I"
+            // for non-corner houses: 0 rot = H, 1 rot = "I"
             switch (n){
                 // no neighbors
                 case 0b00000000:
                     cell->corner_type = 0;
                     cell->corner_rotation = rand() % 3;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 // 1 neighbor
                 case 0b00000001:
                     cell->corner_type = 1;
                     cell->corner_rotation = 0;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00000010:
                     cell->corner_type = 1;
                     cell->corner_rotation = 2;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00000100:
                     cell->corner_type = 1;
                     cell->corner_rotation = 3;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00001000:
                     cell->corner_type = 1;
                     cell->corner_rotation = 1;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 // 2 neighbors no corner
                 case 0b00000011:
                     cell->corner_type = -2;
                     cell->corner_rotation = 1;
+                    lineCells.push_back(cell);
                     break;
                 case 0b00001100:
                     cell->corner_type = -2;
                     cell->corner_rotation = 0;
+                    lineCells.push_back(cell);
                     break;
                 // 2 neighbors yes corner
                 case 0b00000101:
                     cell->corner_type = 2;
                     cell->corner_rotation = 1;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00000110:
                     cell->corner_type = 2;
                     cell->corner_rotation = 0;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00001001:
                     cell->corner_type = 2;
                     cell->corner_rotation = 2;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00001010:
                     cell->corner_type = 2;
                     cell->corner_rotation = 3;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 // 3 neighbors
                 case 0b00000111:
                     cell->corner_type = 3;
                     cell->corner_rotation = 3;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00001011:
                     cell->corner_type = 3;
                     cell->corner_rotation = 1;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00001101:
                     cell->corner_type = 3;
                     cell->corner_rotation = 0;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 case 0b00001110:
                     cell->corner_type = 3;
                     cell->corner_rotation = 2;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
                 // 4 neighbors
                 case 0b00001111:
                     cell->corner_type = 4;
                     cell->corner_rotation = rand() % 3;
-                    cornerCells.push_front(cell);
+                    cornerCells.push_back(cell);
                     break;
             }
         }
     }
 
     // find all lines between corners
+    for(auto cell:lineCells){
+        // first check if its not been visited
+        if(!cell->visitedLine){
+            // mark it as visited
+            cell->visitedLine = true;
+            // allocate a new line
+            list<gridCell*>* cellLine = new list<gridCell*>;
+            // add the line to the line list
+            lineList->push_back(cellLine);
+            // add the cell to the line
+            cellLine->push_back(cell);
 
-    // find start, end, and direction of each line
+            // if rotation is "H", search right
+            if(cell->corner_rotation == 0){
+                gridCell* rightCell = cell;
+                while(1){
+                    // set current to the cell to the right of the initial one
+                    rightCell = grid[cell->i_index][cell->j_index + 1];
+                    // if it hasent been visited and its a house between corners, then add it to list
+                    if((!rightCell->visitedLine) && rightCell->corner_type == -2){
+                        cellLine->push_back(rightCell);
+                        rightCell->visitedLine = true;
+                    }
+                    // end loop if it hits a cell that isnt a house between corners
+                    else{
+                        break;
+                    }
+                }
+            }
+            // if rotation is "I", search down
+            else if(cell->corner_rotation == 1){
+                gridCell* downCell = cell;
+                while(1){
+                    // set current to the cell under the initial one
+                    downCell = grid[cell->i_index + 1][cell->j_index];
+                    // if it hasent been visited and its a house between corners, then add it to list
+                    if((!downCell->visitedLine) && downCell->corner_type == -2){
+                        cellLine->push_back(downCell);
+                        downCell->visitedLine = true;
+                    }
+                    // end loop if it hits a cell that isnt a house between corners
+                    else{
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
+    // for(auto line:*lineList){
+    //     for(auto cell:*line){
+    //         cell->type = 4;
+    //     }
+    // }
 
     //STEP 2: PLACEMENT
 
@@ -608,6 +679,7 @@ void City::PlaceHouses()
     // assign random houses of same type to corners
 
     // assign random houses to lines
+    // at both edges of each line, will need to add extra mid piece
 
     // need to ensure the direction/rotation of each house is specified
 }
@@ -623,13 +695,30 @@ void City::PlaceHouses()
 // */
 // void City::distortCity(int32_t dist)
 // {
+//     if(!placeHousesCalled){
+//         cout<<"ERROR: distortCity() can only be called after placeHouses()!"<<endl;
+//         return;
+//     }
+// }
 
+// /*
+// * outputCity
+// *
+// * outputs city positions to file
+// *
+// */
+// void City::outputCity()
+// {
+//     if(!placeHousesCalled){
+//         cout<<"ERROR: outputCity() can only be called after placeHouses()!"<<endl;
+//         return;
+//     }
 // }
 
 /*
 * PrintGrid
 *
-* prints out the grid of the city to an input string
+* prints out the grid of the city prior to houses being placed
 *
 */
 void City::printGrid(string const & filename)
@@ -637,7 +726,7 @@ void City::printGrid(string const & filename)
     PNG input_cpy = (*input_img);
 
     // loop through cells
-    for(auto cell: cityCells){
+    for(auto cell: *cityCells){
         // find color that cell should be
         HSLAPixel color;
         switch (cell->type){
@@ -696,10 +785,10 @@ void City::printGrid(string const & filename)
             case 3:
                 color = OGE_PX;
                 break;
-            // // corner
-            // case 4:
-            //     color = BLU_PX;
-            //     break;
+            // line
+            case 4:
+                color = BLU_PX;
+                break;
         }
         if(cell->isCliff) color = GRN_PX;
         // loop through each pixel in the cell
@@ -714,6 +803,10 @@ void City::printGrid(string const & filename)
             }
         }
     }
+    // // draw houses on top of grid
+    // if(placeHousesCalled){
+    //     // do the house stuff here
+    // }
     input_cpy.writeToFile(filename);
 }
 
@@ -726,7 +819,16 @@ void City::printGrid(string const & filename)
 City::~City(){
     for(int i = 0; i < gridLength; i++){
         for(int j = 0; j < gridWidth; j++){
-            free(grid[i][j]);
+            delete grid[i][j];
         }
     }
+
+    // free linelist
+    for(auto line:*lineList){
+        delete line;
+    }
+    delete lineList;
+
+    // free cityCells list
+    delete cityCells;
 }

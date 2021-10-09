@@ -66,12 +66,12 @@ class City
             // vertical height - top left corner has y=0
             int32_t pos_y;
             // tracks the type of the cell
-            // 0 = none, 1 = road, 2 = house, 3 = border
+            // 0 = none, 1 = road, 2 = house, 3 = border, 4 = debug purposes
             int32_t type;
             // -1 = unassigned, -2 = house between corners, 0 = no neighbors, 1 = "i", 2 = "L", 3 = "T", 4 = "+"
             int32_t corner_type;
             // 0 = "i L T +", 1 = 90 clockwise, 2 = 180 clockwise, 3 = 270 clockwise, -1 unassigned
-            // for non-corner houses: 0 rot = |----|, 1 rot = "I"
+            // for non-corner houses: 0 rot = H, 1 rot = "I"
             // "+" gets assigned random rotation value
             int32_t corner_rotation;
             // tracks whether the current node is in the city or not
@@ -80,6 +80,8 @@ class City
             bool visited;
             // tracks if its a cliff or not
             bool isCliff;
+            // tracks if visted for line checker
+            bool visitedLine;
             // average luminance of cell
             double avg_lum;
         };
@@ -100,6 +102,9 @@ class City
         // number of steps on city from heightmap
         double num_steps;
 
+        // flag to check if placeHouses was called
+        bool placeHousesCalled;
+
         // length and width of the city
         int32_t cityWidth;
         int32_t cityLength;
@@ -117,13 +122,17 @@ class City
 
         // grid of city. Made up of grid nodes (for now might use houses later)
         // grid is made up of nxn squares with a border of 1 square around the entire image
+        // vectors themselves are NOT dynamically allocated as I was too lazy to
         vector<vector<gridCell*>> grid;
 
         // list of all gridcell pointers in the city
-        list<gridCell*> cityCells;
+        list<gridCell*>* cityCells;
 
-        // list of houses
-        list<House*> houseList;
+        // // list of houses
+        // list<House*>* houseList;
+
+        // list of pointers of lines of gridcells
+        list<list<gridCell*>*>* lineList;
 
         // initializes stuff for constructors
         void init();
@@ -139,11 +148,6 @@ class City
 
         // picks a random neighbor
         gridCell* pickRandNeighbor(gridCell* cell, int32_t dist);
-
-        // // house stuff
-
-        // // loads house info into houseList
-        // void loadHouses();
 
     public:
         // constructor for heightmap
@@ -161,10 +165,17 @@ class City
         // places houses into the city
         // they need to be randomized
         // direction of "stick" needs to be tracked
-        void PlaceHouses();
+        void placeHouses();
 
         // // distorts the city (different architecture needed?)
         // void distortCity(int32_t dist);
+
+        // // prints out overlayed city houses on grid
+        // void printHouses();
+
+        // // outputs house placements to file
+        // outputCity("string?");
+
 
         // Destructor
         ~City();

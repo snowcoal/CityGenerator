@@ -21,20 +21,20 @@ int main(){
     srand(69420);
 
     // no heightmap input
-    City city(&input, 11, 70);
-    city.addRandomRoads(50);
-    city.PlaceHouses();
-    city.printGrid("tests/output.png");
+    City city0(&input, 11, 70);
+    city0.addRandomRoads(50);
+    city0.placeHouses();
+    city0.printGrid("tests/output.png");
 
     // no heightmap input
     City city1(&input, 11, 70);
-    city1.PlaceHouses();
+    city1.placeHouses();
     city1.printGrid("tests/output_maze.png");
 
     // no heightmap input
     City city2(&input, 11, 70);
     city2.addRandomRoads(10);
-    city2.PlaceHouses();
+    city2.placeHouses();
     city2.printGrid("tests/output2.png");
     
     // yes heightmap input
