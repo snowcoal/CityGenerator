@@ -5,6 +5,7 @@
 #include <list>
 
 #include "City.h"
+#include "HouseSet.h"
 #include "PNGimage/PNG.h"
 #include "PNGimage/HSLAPixel.h"
 
@@ -19,7 +20,7 @@ using namespace std;
 * lr_bias - amount of bias to left/right vs up/down
 */
 City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias)
-{
+{   
     // init basic private variables
     num_steps = 0;
     heightmap_img = NULL;
@@ -55,6 +56,16 @@ City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, 
 */
 void City::init()
 {
+    // check inputs
+    if(grid_cell_size%2 == 0){
+        cout<<"ERROR: grid_box_width input must be an odd number!"<<endl;
+        return;
+    }
+    if(lrbias < 0 || lrbias > 100){
+        cout<<"ERROR: lr_bias must be in the range of 0-100!"<<endl;
+        return;
+    }
+
     // init basic private variables
     cityWidth = input_img->width();
     cityLength = input_img->height();
@@ -363,6 +374,11 @@ City::gridCell* City::pickRandNeighbor(gridCell* cell, int32_t lrbias)
 */
 void City::addRandomRoads(int32_t dist)
 {
+    if(dist < 0 || dist > 100){
+        cout<<"ERROR: dist must be in the range of 0-100!"<<endl;
+        return;
+    }
+
     if(placeHousesCalled){
         cout<<"ERROR: addRandomRoads() cannot be called after placeHouses()!"<<endl;
         return;
@@ -429,6 +445,8 @@ void City::addRandomRoads(int32_t dist)
         }
     }
 
+    list<gridCell*> newHouses;
+
     // connect adjacent extraneous houses together (brute force algorithm)
     for(auto cell: *cityCells){
         // skip any non-house cells
@@ -481,9 +499,16 @@ void City::addRandomRoads(int32_t dist)
             else{
                 int32_t i_diff = (cells[n]->i_index - i) >> 1;
                 int32_t j_diff = (cells[n]->j_index - j) >> 1;
-                grid[i + i_diff][j + j_diff]->type = 2;
+                // add the cell between them to the lsit
+                gridCell* newHouse = grid[i + i_diff][j + j_diff];
+                newHouses.push_back(newHouse);
             }
         }
+    }
+
+    // mark all new houses as type house
+    for(auto cell: newHouses){
+        cell->type = 2;
     }
 }
 
@@ -666,11 +691,11 @@ void City::placeHouses()
         }
     }
 
-    // for(auto line:*lineList){
-    //     for(auto cell:*line){
-    //         cell->type = 4;
-    //     }
-    // }
+    for(auto line:*lineList){
+        for(auto cell:*line){
+            cell->type = 4;
+        }
+    }
 
     //STEP 2: PLACEMENT
 
@@ -737,7 +762,7 @@ void City::printGrid(string const & filename)
             // road
             case 1:
                 // color = BLU_PX;
-                color = BLK_PX;
+                color = WTE_PX;
                 break;
             // house
             case 2:
@@ -747,10 +772,10 @@ void City::printGrid(string const & filename)
                 //         color = RED_PX;
                 //         break;
                 //     case 0:
-                //         color = RED_PX;
+                //         color = BLU_PX;
                 //         break;
                 //     case 1:
-                //         color = RED_PX;
+                //         color = BLU_PX;
                 //         break;
                 //     case 2:
                 //         color = RED_PX;

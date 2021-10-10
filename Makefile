@@ -1,5 +1,5 @@
 EXENAME = CityGenerator
-OBJS = main.o City.o House.o PNG.o HSLAPixel.o lodepng.o
+OBJS = main.o City.o HouseSet.o PNG.o HSLAPixel.o lodepng.o
 
 CXX = clang++
 CXXFLAGS = -std=c++1y -stdlib=libc++ -c -g -O0 -Wall -Wextra -pedantic
@@ -15,16 +15,16 @@ $(EXENAME) : output_msg $(OBJS)
 
 # main:
 	
-main.o : main.cpp City.h House.h PNGimage/PNG.h PNGimage/HSLAPixel.h
+main.o : main.cpp City.h HouseSet.h PNGimage/PNG.h PNGimage/HSLAPixel.h
 	$(CXX) $(CXXFLAGS) main.cpp
  
 # CityGenerator:
 
-City.o: City.cpp City.h House.h PNGimage/PNG.h 
+City.o: City.cpp City.h HouseSet.h PNGimage/PNG.h 
 	$(CXX) $(CXXFLAGS) City.cpp
  
-House.o: House.cpp House.h
-	$(CXX) $(CXXFLAGS) House.cpp
+HouseSet.o: HouseSet.cpp HouseSet.h
+	$(CXX) $(CXXFLAGS) HouseSet.cpp
 
 # PNGimage:
 

@@ -4,8 +4,7 @@
 #include <vector>
 #include <list>
 
-#include "House.h"
-#include "City.h"
+#include "HouseSet.h"
 #include "PNGimage/PNG.h"
 #include "PNGimage/HSLAPixel.h"
 
@@ -48,6 +47,7 @@ const HSLAPixel GRN_PX(120,1.0,0.5);
 const HSLAPixel BLU_PX(240,1.0,0.5);
 const HSLAPixel OGE_PX(39,1.0,0.5);
 const HSLAPixel BLK_PX(360,1.0,0.0);
+const HSLAPixel WTE_PX(0,1.0,1.0);
 const HSLAPixel BRN_PX(18, 0.58, 0.25);
 
 class City
@@ -74,6 +74,11 @@ class City
             // for non-corner houses: 0 rot = H, 1 rot = "I"
             // "+" gets assigned random rotation value
             int32_t corner_rotation;
+            // average luminance of cell
+            double avg_lum;
+
+            // Flags used for various purposes
+
             // tracks whether the current node is in the city or not
             bool inCity;
             // marks if visited for maze generator
@@ -82,8 +87,22 @@ class City
             bool isCliff;
             // tracks if visted for line checker
             bool visitedLine;
-            // average luminance of cell
-            double avg_lum;
+        };
+
+        // houses
+        struct house
+        {
+            // positional data
+            int32_t pos_x;
+            int32_t pos_z;
+            int32_t pos_y;
+
+            // tracks width
+            int32_t width;
+
+            // same as corner_type and corner_rotation
+            int32_t corner_type;
+            int32_t corner_rotation;
         };
 
         // // position of corner of city in the final map (needed later?)
