@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <stack>
 #include <list>
+#include <algorithm>
 
 #include "City.h"
 #include "HouseSet.h"
@@ -83,6 +84,9 @@ void City::init()
 
     list<gridCell*>* l2 = new list<gridCell*>;
     cityCells = l2;
+
+    list<cityHouse*>* l3 = new list<cityHouse*>;
+    houseList = l3;
 
     // init grid cells
     for(int i = 0; i < gridLength; i++){
@@ -519,13 +523,15 @@ void City::addRandomRoads(int32_t dist)
 * loads and places houses into city
 *
 */
-void City::placeHouses()
+void City::placeHouses(HouseSet* house_set)
 {
     if(placeHousesCalled){
         cout<<"ERROR: placeHouses() cannot be called more than once!"<<endl;
         return;
     }
+
     //STEP 1: SETUP
+
     placeHousesCalled = true;
 
     list<gridCell*> cornerCells;
@@ -657,13 +663,15 @@ void City::placeHouses()
             // if rotation is "H", search right
             if(cell->corner_rotation == 0){
                 gridCell* rightCell = cell;
+                gridCell* cur_cell = cell;
                 while(1){
                     // set current to the cell to the right of the initial one
-                    rightCell = grid[cell->i_index][cell->j_index + 1];
+                    rightCell = grid[cur_cell->i_index][cur_cell->j_index + 1];
                     // if it hasent been visited and its a house between corners, then add it to list
-                    if((!rightCell->visitedLine) && rightCell->corner_type == -2){
+                    if(rightCell->corner_type == -2){
                         cellLine->push_back(rightCell);
                         rightCell->visitedLine = true;
+                        cur_cell = rightCell;
                     }
                     // end loop if it hits a cell that isnt a house between corners
                     else{
@@ -674,13 +682,15 @@ void City::placeHouses()
             // if rotation is "I", search down
             else if(cell->corner_rotation == 1){
                 gridCell* downCell = cell;
+                gridCell* cur_cell = cell;
                 while(1){
                     // set current to the cell under the initial one
-                    downCell = grid[cell->i_index + 1][cell->j_index];
+                    downCell = grid[cur_cell->i_index + 1][cur_cell->j_index];
                     // if it hasent been visited and its a house between corners, then add it to list
-                    if((!downCell->visitedLine) && downCell->corner_type == -2){
+                    if(downCell->corner_type == -2){
                         cellLine->push_back(downCell);
                         downCell->visitedLine = true;
+                        cur_cell = downCell;
                     }
                     // end loop if it hits a cell that isnt a house between corners
                     else{
@@ -691,24 +701,162 @@ void City::placeHouses()
         }
     }
 
-    for(auto line:*lineList){
-        for(auto cell:*line){
-            cell->type = 4;
-        }
-    }
+    // // debugging function
+    // for(auto line:*lineList){
+    //     cout << line->size() << " " << line->front()->corner_rotation << endl;
+    //     for(auto cell:*line){
+    //         cell->type = 4;
+    //     }
+    // }
 
     //STEP 2: PLACEMENT
 
-    // first load all houses from csv
+    // assign houses to all corners
+    assignHousesToCorners(house_set, &cornerCells);
 
-    // assign random houses of same type to corners
-
-    // assign random houses to lines
-    // at both edges of each line, will need to add extra mid piece
-
-    // need to ensure the direction/rotation of each house is specified
+    // assign houses to all lines
+    assignHousesToLines(house_set);
 }
 
+/*
+* assignHousesToCorners
+*
+* assigns houses to all corners. Inputs are the house set and corner cell set
+*
+*/
+void City::assignHousesToCorners(HouseSet* house_set, list<gridCell*>* cornerCells)
+{
+    for(auto cell: *cornerCells){
+        // get a random house with same type
+        HouseSet::houseType* houseID = house_set->pickRandHouseByWidth(cell->corner_type, grid_cell_size, grid_cell_size);
+        if(houseID == NULL){
+            cout << "ERROR: could not find house for cell" << endl;
+            return;
+        }
+
+        // make new city house and set its data
+        cityHouse* city_house = new cityHouse;
+        
+        // location is at CENTER of house 
+        city_house->pos_x = cell->pos_x + ((grid_cell_size - 1) >> 1) + 1;
+        city_house->pos_y = cell->pos_y;
+        city_house->pos_z = cell->pos_z + ((grid_cell_size - 1) >> 1) + 1;
+
+        city_house->rotation = cell->corner_rotation;
+        city_house->house_ptr = houseID;
+
+        houseList->push_back(city_house);
+    }
+}
+
+/*
+* assignHousesToLines
+*
+* assigns houses to all corners Inputs are the house set (line list set is a member var)
+*
+*/
+void City::assignHousesToLines(HouseSet* house_set)
+{
+    for(auto line:*lineList){
+        // calculate various needed values
+        int32_t line_cell_width = line->size();
+        int32_t line_rotation = line->front()->corner_rotation;
+        int32_t line_px_width = GRID_SPACE + GRID_SPACE * line_cell_width + grid_cell_size * line_cell_width;
+        // store beginning and end of line
+        gridCell* line_begin = line->front();
+        gridCell* line_end = line->back();
+        // store y val of line
+        int32_t line_y_val = line_begin->pos_y;
+
+
+        vector<cityHouse*> lineHouses;
+        
+        // keep track of how many houses have been placed
+        int32_t count = 0;
+        while(1){
+            int32_t houses_left = line_cell_width - count;
+
+            if(houses_left > 1){
+                // pick a random house of width >= grid_cell_size
+                HouseSet::houseType* houseID = house_set->pickRandHouseByWidth(-2, grid_cell_size, INT32_MAX);
+                // add the first house
+                cityHouse* city_house = new cityHouse;
+                // assign its rotation and ID pointer
+                city_house->house_ptr = houseID;
+                city_house->rotation = line_rotation;
+                lineHouses.push_back(city_house);
+                count++;
+
+                int32_t width = getCityHouseWidth(city_house);
+                // if the first house was a grid_cell_size house, dont add another
+                if(width == grid_cell_size){
+                    continue;
+                }
+                // if the first house was grid_cell_size * 2 + 1, update count and dont add another
+                else if(width == grid_cell_size*2 + 1){
+                    count++;
+                    continue;
+                }
+                // otherwise add a smaller house of corresponding width to add 2 houses total during current pass
+                else{
+                    int32_t width2 = 2*grid_cell_size - width;
+                    // pick a random house of corresponding width to add to 2 houses
+                    HouseSet::houseType* houseID2 = house_set->pickRandHouseByWidth(-2, width2, width2);
+                    // add the 2nd house
+                    cityHouse* city_house2 = new cityHouse;
+                    city_house2->house_ptr = houseID2;
+                    city_house2->rotation = line_rotation;
+                    lineHouses.push_back(city_house2);
+                    count++;
+                }
+            }
+            else if(houses_left == 1){
+                // add a house of width equal to grid cell size
+                HouseSet::houseType* houseID = house_set->pickRandHouseByWidth(-2, grid_cell_size, grid_cell_size);
+                cityHouse* city_house = new cityHouse;
+                // assign its rotation and ID pointer
+                city_house->house_ptr = houseID;
+                city_house->rotation = line_rotation;
+                lineHouses.push_back(city_house);
+                count++;
+            }
+            // break if theres no more houses to add
+            else if(houses_left == 0){
+                break;
+            }
+        }
+
+        // // assertion check
+        // int32_t total_width = 0;
+        // for(auto house:lineHouses){
+        //     total_width += getCityHouseWidth(house);
+        // }
+        // total_width += (lineHouses.size() + 1);
+        // assert(total_width == line_px_width);
+
+
+        // randomly shuffle vector
+        std::random_shuffle(lineHouses.begin(), lineHouses.end());
+
+        // do if line goes from left to right ("H")
+        if(line_rotation == 0){
+            // if line goes from left to right, its Z val is constant and is the centered line in the middle of the cells
+            int32_t line_z_val = line_begin->pos_z + ((grid_cell_size - 1) >> 1) + 1;
+
+        }
+        // do if line goes from top to bottom ("I")
+        else if(line_rotation == 1){
+            // if line goes from top to bottom, its X val is constant and is the centered line in the middle of the cells
+            int32_t line_x_val = line_begin->pos_x + ((grid_cell_size - 1) >> 1) + 1;
+
+        }    
+
+        // add split pieces on all sides of houses, add all houses, and set their positional data
+        
+        // need to remove adjacent corner houses (probably at the middle of the placehouses() function)
+
+    }
+}
 
 // /*
 // * distortCity
@@ -836,12 +984,35 @@ void City::printGrid(string const & filename)
 }
 
 /*
+* getCityHouseWidth
+*
+* returns the width of input cityHouse
+*
+*/
+int32_t City::getCityHouseWidth(cityHouse* house)
+{
+    return(house->house_ptr->width);
+}
+
+/*
+* getCityHouseType
+*
+* returns the type of input cityHouse
+*
+*/
+int32_t City::getCityHouseType(cityHouse* house)
+{
+    return(house->house_ptr->type);
+}
+
+/*
 * Destructor
 *
 * frees memory
 *
 */
 City::~City(){
+    // free all cityCells
     for(int i = 0; i < gridLength; i++){
         for(int j = 0; j < gridWidth; j++){
             delete grid[i][j];
@@ -856,4 +1027,10 @@ City::~City(){
 
     // free cityCells list
     delete cityCells;
+
+    // free house list
+    for(auto house:*houseList){
+        delete house;
+    }
+    delete houseList;
 }

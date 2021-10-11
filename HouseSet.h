@@ -2,6 +2,7 @@
 
 #include <map>
 #include <list>
+#include <vector>
 
 using std::vector;
 using std::string;
@@ -13,7 +14,7 @@ using std::map;
 
 class HouseSet
 {
-    private:
+    public:
         // house type defines positional data of original houses on actual map
         struct houseType{
             // ID of house (for mapping it in game)
@@ -39,13 +40,6 @@ class HouseSet
             int32_t pos2_z;
         };
 
-        // tree of input houses sorted by type, and then by width
-        // inputting an type gets a list that contains houses with that same type, and
-        // each list is sorted smallest to largest based on width
-        map<int32_t, list<houseType*>*> houseTypeTree;
-
-
-    public:
         // Constructor
         HouseSet(string const & filename);
         // Destructor
@@ -54,7 +48,19 @@ class HouseSet
         // // gets house list for input type
         // getHouseList(int32_t type)
 
+        // picks a random house in the given width range that has the given type, returns its ID
+        houseType* pickRandHouseByWidth(int32_t type, int32_t minWidth, int32_t maxWidth);
+
         // tree testing method
         void printTree();
+        
+    private:
+        // tree of input houses sorted by type, and then by width
+        // inputting an type gets a list that contains houses with that same type, and
+        // each list is sorted smallest to largest based on width
+        map<int32_t, list<houseType*>*> houseTypeTree;
+
+        // map of every house by ID
+        map<int32_t, houseType*> housesByID;
 
 };

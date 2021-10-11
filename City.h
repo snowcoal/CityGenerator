@@ -90,19 +90,16 @@ class City
         };
 
         // houses
-        struct house
+        struct cityHouse
         {
-            // positional data
+            // positional data (center point based)
             int32_t pos_x;
             int32_t pos_z;
             int32_t pos_y;
-
-            // tracks width
-            int32_t width;
-
-            // same as corner_type and corner_rotation
-            int32_t corner_type;
-            int32_t corner_rotation;
+            // rotation same as corner_rotation
+            int32_t rotation;
+            // pointer to houseType of house its assigned to
+            HouseSet::houseType* house_ptr;
         };
 
         // // position of corner of city in the final map (needed later?)
@@ -132,7 +129,7 @@ class City
         int32_t gridWidth;
         int32_t gridLength;
 
-        // width of each square (includes 1 block padding on each side)
+        // width of each square (does NOT include 1 block padding on each side)
         // 13 is default
         int32_t grid_cell_size;
 
@@ -147,8 +144,8 @@ class City
         // list of all gridcell pointers in the city
         list<gridCell*>* cityCells;
 
-        // // list of houses
-        // list<House*>* houseList;
+        // list of houses
+        list<cityHouse*>* houseList;
 
         // list of pointers of lines of gridcells
         list<list<gridCell*>*>* lineList;
@@ -168,6 +165,18 @@ class City
         // picks a random neighbor
         gridCell* pickRandNeighbor(gridCell* cell, int32_t dist);
 
+        // assigns houses to corners
+        void assignHousesToCorners(HouseSet* house_set, list<gridCell*>* cornerCells);
+
+        // assigns houses to lines
+        void assignHousesToLines(HouseSet* house_set);
+
+        // helper function to get width of cityhouse
+        int32_t getCityHouseWidth(cityHouse* house);
+
+        // helper function to get type of cityhouse
+        int32_t getCityHouseType(cityHouse* house);
+
     public:
         // constructor for heightmap
         City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, int32_t steps);
@@ -184,7 +193,7 @@ class City
         // places houses into the city
         // they need to be randomized
         // direction of "stick" needs to be tracked
-        void placeHouses();
+        void placeHouses(HouseSet* house_set);
 
         // // distorts the city (different architecture needed?)
         // void distortCity(int32_t dist);

@@ -72,6 +72,9 @@ HouseSet::HouseSet(string const & filename)
             house->pos2_y = values[10];
             house->pos2_z = values[11];
 
+            // map it to the houseID map
+            housesByID.insert(make_pair(values[0], house));
+
             // get list that house needs to go into
             list<houseType*>* houseList = houseTypeTree[house->type];
             list<houseType*>::iterator it;
@@ -102,6 +105,55 @@ HouseSet::HouseSet(string const & filename)
     catch (const ifstream::failure& e) {
         cout << "ERROR: could not open or read house data input file" << endl;
     }
+}
+
+/**
+* pickRandHouseByWidth
+*
+* picks a random house with the given type that has a width that is in [minWidth, maxWidth]
+* if minWidth = maxWidth, it picks a random house with exactly that width
+* type - ID of type of house to be picked:
+* -1 = unassigned, -2 = house between corners, 0 = no neighbors, 1 = "i", 2 = "L", 3 = "T", 4 = "+"
+* minWidth - min width of house to be picked
+* maxWidth - max width of house to be picked
+*
+* return - pointer to the house that was picked, returns null if inputs bad or if no house found
+*
+*/
+HouseSet::houseType* HouseSet::pickRandHouseByWidth(int32_t typeID, int32_t minWidth, int32_t maxWidth)
+{
+    houseType* retVal = NULL;
+    // check input for range
+    if(typeID < -2 || typeID > 4 || maxWidth < minWidth || minWidth <= 0 || maxWidth <=0){
+        cout << "ERROR: input into pickRandHouseByWidth is invalid" << endl;
+        return retVal;
+    }
+    // get the list of houses with the type
+    list<houseType*>* houseList = houseTypeTree[typeID];
+
+    vector<houseType*> houseVec;
+    // get all houses from list that are within the correct range
+    for(auto house: *houseList){
+        // break loop if hit house that has a width larger than the max allowed
+        if(house->width > maxWidth){
+            break;
+        }
+        // otherwise add it to the vector if its width is larger or equal to min
+        else if(house->width >= minWidth){
+            houseVec.push_back(house);
+        }
+    }
+    size_t size = houseVec.size();
+    if(size == 0){
+        cout << "ERROR: attempted to pick house of width "<< minWidth <<" which is non-existent" << endl;
+        return retVal;
+    }
+    // generate a random index from 0 - max size of vector
+    int32_t index = rand() % size;
+    // get ID of chosen house
+    retVal = houseVec[index];
+
+    return retVal;
 }
 
 /**
