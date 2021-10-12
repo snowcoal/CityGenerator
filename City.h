@@ -19,7 +19,7 @@ using std::endl;
 // percentages:
 #define  PX_PCT                 0.5
 #define  OUTER_RD_PCT           0.9
-#define  HEIGHT_PCT             0.13
+#define  HEIGHT_PCT             0.17
 #define  LRBIAS                 90
 
 // amounts of things:
@@ -30,6 +30,7 @@ using std::endl;
 #define  WHITE_PX_LUM           1
 #define  BITMASK                0x03
 #define  BITMASK2               0x01
+#define  NUM_LOOP_PASSES        2
 
 // order array:
 /*  lr  p | 4th | 3rd | 2nd | 1st | bin encode  | hex
@@ -49,6 +50,7 @@ const HSLAPixel OGE_PX(39,1.0,0.5);
 const HSLAPixel BLK_PX(360,1.0,0.0);
 const HSLAPixel WTE_PX(0,1.0,1.0);
 const HSLAPixel BRN_PX(18, 0.58, 0.25);
+const HSLAPixel GRY_PX(0, 0.0, 0.35);
 
 class City
 {
@@ -66,7 +68,7 @@ class City
             // vertical height - top left corner has y=0
             int32_t pos_y;
             // tracks the type of the cell
-            // 0 = none, 1 = road, 2 = house, 3 = border, 4 = debug purposes
+            // 0 = none, 1 = road, 2 = house, 3 = border, 4 = debug purposes,
             int32_t type;
             // -1 = unassigned, -2 = house between corners, 0 = no neighbors, 1 = "i", 2 = "L", 3 = "T", 4 = "+"
             int32_t corner_type;
@@ -87,6 +89,15 @@ class City
             bool isCliff;
             // tracks if visted for line checker
             bool visitedLine;
+            // tracks if visted by BFS
+            bool visitedBFS;
+        };
+
+        // struct returned by getNumNeighbors
+        struct cellCount
+        {
+            int32_t houseCount;
+            int32_t roadCount;
         };
 
         // houses
@@ -133,6 +144,9 @@ class City
         // 13 is default
         int32_t grid_cell_size;
 
+        // half the size of the grid space
+        int32_t half_grid_space;
+
         // bias of left/right vs up/down
         int32_t lrbias;
 
@@ -159,6 +173,12 @@ class City
         // generates the road "maze" of the city
         int32_t generateRoads();
 
+        // removes adjacent alone cells
+        void combineAdjacentCells(list<gridCell*>* cellList, int32_t baseType, int32_t checkType);
+
+        // gets number of opposite type neighbors to input
+        cellCount getNumNeighbors(gridCell* cell);
+
         // generates random True/False with given distribution
         bool randTF(int32_t dist);
 
@@ -176,6 +196,9 @@ class City
 
         // helper function to get type of cityhouse
         int32_t getCityHouseType(cityHouse* house);
+
+        // adds split type houses
+        void addSplit(int32_t posx, int32_t posy, int32_t posz, int32_t rot, HouseSet* house_set);
 
     public:
         // constructor for heightmap

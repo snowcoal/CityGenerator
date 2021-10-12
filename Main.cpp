@@ -46,7 +46,9 @@ int main(){
     city2.printGrid("tests/output2.png");
     
     // yes heightmap input
-    City hcity(&input, 13, 20, &heightmap, 5);
+    City hcity(&input, 13, 20, &heightmap, 2);
+    hcity.addRandomRoads(40);
+    hcity.placeHouses(&houses);
     hcity.printGrid("tests/output_heightmap.png");
 
 

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <stack>
+#include <queue>
 #include <list>
 #include <algorithm>
 
@@ -78,6 +79,8 @@ void City::init()
     // get area of cell and space
     int grid_cell_area = pow(grid_cell_size,2);
 
+    half_grid_space = ((GRID_SPACE - 1) >> 2) + 1;
+
     // allocate various lists
     list<list<gridCell*>*>* l1 = new list<list<gridCell*>*>;
     lineList = l1;
@@ -105,6 +108,7 @@ void City::init()
             cell->visited = false;
             cell->isCliff = false;
             cell->visitedLine = false;
+            cell->visitedBFS = false;
             cell->avg_lum = 0;
             cell->corner_type = -1;
             cell->corner_rotation = -1;
@@ -185,6 +189,7 @@ void City::init()
                 // set it as a cliff if enough surrounding cells are different height and its not a border
                 if((double)(height_cnt) / NUM_ADJ > HEIGHT_PCT && cell->type != 3){
                     cell->isCliff = true;
+                    // cell->type = 5;
                 }
             }
         }
@@ -421,99 +426,153 @@ void City::addRandomRoads(int32_t dist)
         }
     }
 
-    // add house loops
-    for(auto cell: *cityCells){
+    // list to hold new house cells
+    list<gridCell*>* newHouses = new list<gridCell*>;
+    // list to hold new road cells
+    list<gridCell*>* roads = new list<gridCell*>;
+    // list to hold new road cells
+    list<gridCell*>* houses = new list<gridCell*>;
+
+    // add house loops 2x
+    for(int i = 0; i < NUM_LOOP_PASSES; i++){
+        for(auto cell: *cityCells){
+            int32_t house_cnt = 0;
+            int32_t road_cnt = 0;
+
+            // check if the cell is a road and hasnt been visted yet
+            if(cell->type == 1 || cell->type == 2){
+                cellCount cnt = getNumNeighbors(cell);
+                house_cnt = cnt.houseCount;
+                road_cnt = cnt.roadCount;
+            }
+            // otherwise skip it
+            else continue;
+
+            // only edit if it has exactly 7 houses around it
+            if(house_cnt == 7){
+                int32_t i = cell->i_index;
+                int32_t j = cell->j_index;
+
+                // add it to the newRoads list to check later
+                roads->push_back(cell);
+
+                // find extra road
+                for(int k = -1; k <= 1; k++){
+                    for(int l = -1; l <= 1; l++){
+                        // the following should only happen one time per double loop
+                        if(grid[i+k][j+l]->type == 1 && !(k == 0 && l == 0)){
+                            // set the road to a house
+                            gridCell* road = grid[i+k][j+l];
+                            // road->type = 2;
+                            newHouses->push_back(road);
+                            // goto to break double loop idgaf
+                            goto end_loop0;
+                        }
+                    }
+                }
+                end_loop0:
+                continue;
+            }
+            // only add to the list once
+            if(road_cnt == 8 && i == 0){
+                houses->push_back(cell);
+            }
+        }
+
+        for(auto road: *newHouses){
+            road->type = 2;
+        }
+        newHouses->clear(); 
+    }
+
+    // add a few more house cells
+    combineAdjacentCells(roads, 1, 2);
+    delete roads;
+
+    // add a few more road cells
+    combineAdjacentCells(houses, 2, 1);
+    delete houses;
+
+    delete newHouses;
+}
+
+/*
+* getNumNeighbors
+*
+* looks through cellList for cells that have same type 2 cells apart and both surrounded
+* by cells of a different type. It then removes the cell between these two
+*
+*
+* cellList - list of cells to check over
+* baseType - type to set the cells to if needed, and type of center cell
+* checkType - type to check the surrounding cells for
+*/
+void City::combineAdjacentCells(list<gridCell*>* cellList, int32_t baseType, int32_t checkType)
+{
+    list<gridCell*> newCellList;
+    // loop through all potential cells that could have a new connecting road
+    for(auto cell: *cellList){
         int32_t i = cell->i_index;
         int32_t j = cell->j_index;
-        int house_cnt = 0;
-
-        // loop outside cells of all road cells
-        if(cell->type == 1){
-            for(int k = -1; k <= 1; k++){
-                for(int l = -1; l <= 1; l++){
-                    if(grid[i+k][j+l]->type == 2 && !(k == 0 && l == 0)){
-                        house_cnt++;
-                    }
+        // get 4 neighbors
+        gridCell* neighbors[4] = {grid[i][j+2], grid[i][j-2], grid[i+2][j], grid[i-2][j]};
+        for(int k = 0; k < 4; k++){
+            gridCell* ncell = neighbors[k];
+            // check if the neighbors is a road
+            if(ncell->type == baseType){
+                cellCount cnt = getNumNeighbors(ncell);
+                int32_t x = 0;
+                if(checkType == 1){
+                    x = cnt.roadCount;
                 }
-            }
-        }
-        // check if theres exactly 7 houses and set any roads to houses
-        if(house_cnt == 7){
-            for(int k = -1; k <= 1; k++){
-                for(int l = -1; l <= 1; l++){
-                    if(grid[i+k][j+l]->type == 1 && !(k == 0 && l == 0)){
-                        grid[i+k][j+l]->type = 2;
-                    }
+                else if(checkType == 2){
+                    x = cnt.houseCount;
+                }
+                if(x == 8){
+                    int32_t i_diff = (ncell->i_index - i) >> 1;
+                    int32_t j_diff = (ncell->j_index - j) >> 1;
+                    // set cell between them to house
+                    gridCell* new_cell = grid[i + i_diff][j + j_diff];
+                    if(new_cell->type == checkType)
+                    newCellList.push_back(new_cell);
+                    // grid[i + i_diff][j + j_diff]->type = baseType;
                 }
             }
         }
     }
+    for(auto house: newCellList){
+        house->type = baseType;
+    }
+}
 
-    list<gridCell*> newHouses;
+/*
+* getNumNeighbors
+*
+* gets the number of neighboring cells that have type input
+*
+*/
+City::cellCount City::getNumNeighbors(gridCell* cell)
+{   
+    cellCount retVal;
+    retVal.roadCount = 0;
+    retVal.houseCount = 0;
 
-    // connect adjacent extraneous houses together (brute force algorithm)
-    for(auto cell: *cityCells){
-        // skip any non-house cells
-        if(cell->type != 2) continue;
-        int32_t i = cell->i_index;
-        int32_t j = cell->j_index;
-
-        bool break1 = false;
-        for(int k = -1; k <= 1; k++){
-            if(break1) break;
-            for(int l = -1; l <= 1; l++){
-                if(k == 0 && l == 0) continue;
-                // if any of them are not roads break all loops
-                if(grid[i+k][j+l]->type != 1){
-                    break1 = true;
-                }
-            }
-        }
-        // continue outer loop
-        if(break1) continue;
-
-        // if the cell is surrounded by roads, then check neighbors
-
-        vector<gridCell*> cells(4);
-        // right/left
-        cells[0] = grid[i][j+2];
-        cells[1] = grid[i][j-2];
-        // down/up
-        cells[2] = grid[i+2][j];
-        cells[3] = grid[i-2][j];
-
-        for(int n = 0; n < 4; n++){
-            // skip any non-house cells
-            if(cells[n]->type != 2) continue;
-
-            bool break2 = false;
-            for(int k = -1; k <= 1; k++){
-                if(break2) break;
-                for(int l = -1; l <= 1; l++){
-                    if(k == 0 && l == 0) continue;
-                    // if any of them are not roads break all loops
-                    if(grid[cells[n]->i_index+k][cells[n]->j_index+l]->type != 1){
-                        break2 = true;
-                    }
-                }
-            }
-            // continue outer loop
-            if(break2) continue;
-            // set cell between them to a house
-            else{
-                int32_t i_diff = (cells[n]->i_index - i) >> 1;
-                int32_t j_diff = (cells[n]->j_index - j) >> 1;
-                // add the cell between them to the lsit
-                gridCell* newHouse = grid[i + i_diff][j + j_diff];
-                newHouses.push_back(newHouse);
+    int32_t i = cell->i_index;
+    int32_t j = cell->j_index;
+    
+    for(int k = -1; k <= 1; k++){
+        for(int l = -1; l <= 1; l++){
+            if(!(k == 0 && l == 0)){
+                gridCell* ncell = grid[i+k][j+l];
+                // update road counter
+                if((ncell->type == 1 || ncell->isCliff) && ncell->type != 2) retVal.roadCount++;
+                // update house counter
+                else if((ncell->type == 2 || ncell->isCliff) && ncell->type != 1) retVal.houseCount++;
             }
         }
     }
 
-    // mark all new houses as type house
-    for(auto cell: newHouses){
-        cell->type = 2;
-    }
+    return retVal;
 }
 
 
@@ -528,6 +587,13 @@ void City::placeHouses(HouseSet* house_set)
     if(placeHousesCalled){
         cout<<"ERROR: placeHouses() cannot be called more than once!"<<endl;
         return;
+    }
+
+    // first ensure cliffs are correct
+    for(auto cell: *cityCells){
+        if(cell->isCliff){
+            cell->type = 5;
+        }
     }
 
     //STEP 1: SETUP
@@ -716,6 +782,35 @@ void City::placeHouses(HouseSet* house_set)
 
     // assign houses to all lines
     assignHousesToLines(house_set);
+
+    // assign remaining splits
+    for(auto cell: *cityCells){
+        int32_t i = cell->i_index;
+        int32_t j = cell->j_index;
+        // check if cell has even position and if its a corner
+        if((i%2 == 0 || j%2 == 0) && cell->corner_type >= 1){
+            // check surrounding cells to find if any of them are corners
+            gridCell* neighbors[4] = {grid[i][j+1], grid[i][j-1], grid[i+1][j], grid[i-1][j]};
+            for(int n = 0; n < 4; n++){
+                gridCell* ncell = neighbors[n];
+                if(ncell->corner_type >= 1){
+                    // calculate constants
+                    int32_t z_diff = (ncell->i_index - i);
+                    int32_t x_diff = (ncell->j_index - j);
+                    int32_t offset = ((grid_cell_size - 1) >> 1) + 1;
+                    int32_t posx = cell->pos_x + offset;
+                    int32_t posz = cell->pos_z + offset;
+                    int32_t rot = -1;
+                    // calculate rotation
+                    if(z_diff == 0) rot = 0;
+                    else if(x_diff == 0) rot = 1;
+
+                    // add a new split (idk why this works but it does via trial/error)
+                    addSplit(posx + x_diff*(offset) - abs(x_diff), cell->pos_y, posz + z_diff*(offset) - abs(z_diff), rot, house_set);
+                }
+            }
+        }
+    }
 }
 
 /*
@@ -761,10 +856,9 @@ void City::assignHousesToLines(HouseSet* house_set)
         // calculate various needed values
         int32_t line_cell_width = line->size();
         int32_t line_rotation = line->front()->corner_rotation;
-        int32_t line_px_width = GRID_SPACE + GRID_SPACE * line_cell_width + grid_cell_size * line_cell_width;
+        // int32_t line_px_width = GRID_SPACE + GRID_SPACE * line_cell_width + grid_cell_size * line_cell_width;
         // store beginning and end of line
         gridCell* line_begin = line->front();
-        gridCell* line_end = line->back();
         // store y val of line
         int32_t line_y_val = line_begin->pos_y;
 
@@ -838,23 +932,55 @@ void City::assignHousesToLines(HouseSet* house_set)
         // randomly shuffle vector
         std::random_shuffle(lineHouses.begin(), lineHouses.end());
 
+        int32_t line_z_val = 0;
+        int32_t line_x_val = 0;
+
         // do if line goes from left to right ("H")
         if(line_rotation == 0){
             // if line goes from left to right, its Z val is constant and is the centered line in the middle of the cells
-            int32_t line_z_val = line_begin->pos_z + ((grid_cell_size - 1) >> 1) + 1;
+            line_z_val = line_begin->pos_z + ((grid_cell_size - 1) >> 1) + 1;
+            line_x_val = line_begin->pos_x - half_grid_space;
 
+            for(auto house: lineHouses){
+                // add a split
+                addSplit(line_x_val, line_y_val, line_z_val, line_rotation, house_set);
+                line_x_val += GRID_SPACE;
+                // set the houses positional data and add it to the list
+                int32_t width = getCityHouseWidth(house);
+                house->pos_z = line_z_val;
+                house->pos_y = line_y_val;
+                house->pos_x = line_x_val + ((width - 1) >> 1) + 1;
+
+                houseList->push_back(house);
+
+                line_x_val += width;
+            }
+            // add last split
+            addSplit(line_x_val, line_y_val, line_z_val, line_rotation, house_set);
         }
         // do if line goes from top to bottom ("I")
         else if(line_rotation == 1){
             // if line goes from top to bottom, its X val is constant and is the centered line in the middle of the cells
-            int32_t line_x_val = line_begin->pos_x + ((grid_cell_size - 1) >> 1) + 1;
+            line_x_val = line_begin->pos_x + ((grid_cell_size - 1) >> 1) + 1;
+            line_z_val = line_begin->pos_z - half_grid_space;
 
-        }    
+            for(auto house: lineHouses){
+                // add a split
+                addSplit(line_x_val, line_y_val, line_z_val, line_rotation, house_set);
+                line_z_val += GRID_SPACE;
+                // set the houses positional data and add it to the list
+                int32_t width = getCityHouseWidth(house);
+                house->pos_z = line_z_val + ((width - 1) >> 1) + 1;
+                house->pos_y = line_y_val;
+                house->pos_x = line_x_val;
 
-        // add split pieces on all sides of houses, add all houses, and set their positional data
-        
-        // need to remove adjacent corner houses (probably at the middle of the placehouses() function)
+                houseList->push_back(house);
 
+                line_z_val += width;
+            }
+            // add last split
+            addSplit(line_x_val, line_y_val, line_z_val, line_rotation, house_set);
+        }
     }
 }
 
@@ -887,6 +1013,38 @@ void City::assignHousesToLines(HouseSet* house_set)
 //         return;
 //     }
 // }
+
+/*
+* addSplit
+*
+* adds a new split type house to the house set
+*
+*
+*/
+void City::addSplit(int32_t posx, int32_t posy, int32_t posz, int32_t rot, HouseSet* house_set)
+{
+    // add a house of width 1
+    HouseSet::houseType* houseID = house_set->pickRandHouseByWidth(-2, 1, 1);
+    cityHouse* city_house = new cityHouse;
+
+    if(!rot){
+        city_house->pos_x = posx + ((GRID_SPACE - 1) >> 1) + 1;
+        city_house->pos_z = posz;
+    }
+    else if(rot){
+        city_house->pos_x = posx;
+        city_house->pos_z = posz + ((GRID_SPACE - 1) >> 1) + 1;
+    }
+
+    // set its information
+    city_house->pos_y = posy;
+
+    city_house->rotation = rot;
+    city_house->house_ptr = houseID;
+
+    // add it to the list
+    houseList->push_back(city_house);
+}
 
 /*
 * PrintGrid
@@ -962,8 +1120,12 @@ void City::printGrid(string const & filename)
             case 4:
                 color = BLU_PX;
                 break;
+            // cliff
+            case 5:
+                color = GRN_PX;
+                break;
         }
-        if(cell->isCliff) color = GRN_PX;
+        // if(cell->isCliff) color = GRN_PX;
         // loop through each pixel in the cell
         for(int k = cell->pos_x; k < cell->pos_x + grid_cell_size; k++){
             for(int l = cell->pos_z; l < cell->pos_z + grid_cell_size; l++){
@@ -976,10 +1138,54 @@ void City::printGrid(string const & filename)
             }
         }
     }
-    // // draw houses on top of grid
-    // if(placeHousesCalled){
-    //     // do the house stuff here
-    // }
+
+    // input_cpy.writeToFile(filename);
+
+    // draw houses on top of grid
+    if(placeHousesCalled){
+        for(auto house:*houseList){
+            int32_t width = getCityHouseWidth(house);
+            int32_t x_width = 0;
+            int32_t z_width = 0;
+            int32_t x_corner = 0;
+            int32_t z_corner = 0;
+            // if its a corner house dont care about rotation
+            // do if line goes from left to right ("H")
+            if(!(house->rotation)){
+                x_width = width;
+                z_width = grid_cell_size;
+            }
+            // do if line goes from top to bottom ("I")
+            else{
+                x_width = grid_cell_size;
+                z_width = width;
+            }
+
+            x_corner = house->pos_x - (((x_width - 1) >> 1) + 1);
+            z_corner = house->pos_z - (((z_width - 1) >> 1) + 1);
+
+            int x_max = x_width + x_corner;
+            int z_max = z_width + z_corner;
+
+            for(int i = z_corner; i < z_max; i++){
+                for(int j = x_corner; j < x_max; j++){
+                    // get current pixel
+                    HSLAPixel & pixel = input_cpy.getPixel(j, i);
+                    if(i == z_corner || j == x_corner || i == (z_max-1) || j == (x_max-1)){
+                        if(width == 1){
+                            pixel = GRY_PX;
+                        }
+                        else{
+                            pixel = BLK_PX;
+                        }
+                    }
+                    else{
+                        pixel = BRN_PX;
+                    }
+                }
+            }
+        }
+    }
     input_cpy.writeToFile(filename);
 }
 
