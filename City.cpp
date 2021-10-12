@@ -4,6 +4,7 @@
 #include <stack>
 #include <queue>
 #include <list>
+#include <fstream>
 #include <algorithm>
 
 #include "City.h"
@@ -984,36 +985,6 @@ void City::assignHousesToLines(HouseSet* house_set)
     }
 }
 
-// /*
-// * distortCity
-// *
-// * distorts the city by given percentage
-// *
-// * dist controls how much it gets distorted
-// *
-// */
-// void City::distortCity(int32_t dist)
-// {
-//     if(!placeHousesCalled){
-//         cout<<"ERROR: distortCity() can only be called after placeHouses()!"<<endl;
-//         return;
-//     }
-// }
-
-// /*
-// * outputCity
-// *
-// * outputs city positions to file
-// *
-// */
-// void City::outputCity()
-// {
-//     if(!placeHousesCalled){
-//         cout<<"ERROR: outputCity() can only be called after placeHouses()!"<<endl;
-//         return;
-//     }
-// }
-
 /*
 * addSplit
 *
@@ -1044,6 +1015,121 @@ void City::addSplit(int32_t posx, int32_t posy, int32_t posz, int32_t rot, House
 
     // add it to the list
     houseList->push_back(city_house);
+}
+
+// /*
+// * distortCity
+// *
+// * distorts the city by given percentage
+// *
+// * dist controls how much it gets distorted
+// *
+// */
+// void City::distortCity(int32_t dist)
+// {
+//     if(!placeHousesCalled){
+//         cout<<"ERROR: distortCity() can only be called after placeHouses()!"<<endl;
+//         return;
+//     }
+// }
+
+/*
+* outputCity
+*
+* generates a set of worldedit commands to output the city
+*
+*/
+void City::outputCity()
+{
+    if(!placeHousesCalled){
+        cout<<"ERROR: outputCity() can only be called after placeHouses()!"<<endl;
+        return;
+    }
+
+    vector<cityHouse> houseList2;
+
+    // not memory efficient but i couldnt get it working a different way
+    for(auto house: *houseList){
+        houseList2.push_back(*house);
+    }
+
+    // sort list first by width then by ID. This ensures all IDs are next to each other and split houses come first
+    sort(houseList2.begin(), houseList2.end(), [](const cityHouse& a, const cityHouse& b){
+        int32_t a_ID = a.house_ptr->ID;
+        int32_t b_ID = b.house_ptr->ID;
+        int32_t a_w = a.house_ptr->width;
+        int32_t b_w = b.house_ptr->width;
+        int32_t a_r = a.rotation;
+        int32_t b_r = b.rotation;
+        if(a_w != b_w){
+            return a_w < b_w;
+        }
+        // if widths are equal sort by ID
+        else if(a_ID != b_ID){
+            return a_ID < b_ID;
+        }
+        // otherwise sort by rotation
+        else{
+            return a_r < b_r;
+        }
+    });
+
+    // open file
+    fstream fp;
+    fp.open("tests/output.txt", ios::out);
+
+    int32_t cur_ID = -69;
+    int32_t cur_rot = -69;
+    bool newCopyFlag = false;
+    // loop through ordered list
+    for(auto house: houseList2){
+        HouseSet::houseType* housePtr = house.house_ptr;
+        int32_t houseID = housePtr->ID;
+        int32_t houseType = getCityHouseType(&house);
+        int32_t houseRot = house.rotation;
+        // do this whenever a new houseID comes up
+        if(houseID != cur_ID){
+            cur_ID = houseID;
+            // copy the next house in game
+            // tp player to copy location
+            fp <<"/tp @s "<< housePtr->cpy_pt_x <<" "<< housePtr->cpy_pt_y <<" "<< housePtr->cpy_pt_z << endl;
+            // set pos1
+            fp <<"//pos1 "<< housePtr->pos1_x <<" "<< housePtr->pos1_y <<" "<< housePtr->pos1_z << endl;
+            // set pos2
+            fp <<"//pos2 "<< housePtr->pos2_x <<" "<< housePtr->pos2_y <<" "<< housePtr->pos2_z << endl;
+            // do copy with no bedrock
+            fp <<"//copy -m !bedrock"<< endl;
+
+            // set flag that new house was copied
+            newCopyFlag = true;
+        }
+
+        // tp player to the paste location
+        fp <<"/tp @s "<< house.pos_x <<" "<< house.pos_y <<" "<< house.pos_z << endl;
+
+        // do this whenever a new rotation comes up
+        if(houseRot != cur_rot){
+            // dont neg rotate it the first time or if a house was just copied
+            if(cur_rot != -69 && cur_rot != 0 && !newCopyFlag){
+                // rotate it by the old rotation in the negative direction
+                if(houseType == -2) fp <<"//rotate "<< cur_rot * -180 << endl;
+                else if(houseType >= 0) fp <<"//rotate "<< cur_rot * -90 << endl;
+            }
+            // rotate the house if needed
+            if(houseRot != 0){
+                if(houseType == -2) fp <<"//rotate "<< houseRot * 180 << endl;
+                else if(houseType >= 0) fp <<"//rotate "<< houseRot * 90 << endl;
+            }
+            cur_rot = houseRot;
+        }
+        // paste the house in
+        fp <<"//paste"<< endl;
+
+        // reset new copy flag
+        newCopyFlag = false;
+    }
+
+    fp.close();
 }
 
 /*

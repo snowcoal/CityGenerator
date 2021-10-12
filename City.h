@@ -221,11 +221,8 @@ class City
         // // distorts the city (different architecture needed?)
         // void distortCity(int32_t dist);
 
-        // // prints out overlayed city houses on grid
-        // void printHouses();
-
-        // // outputs house placements to file
-        // outputCity("string?");
+        // outputs house placements to file
+        void outputCity();
 
 
         // Destructor
