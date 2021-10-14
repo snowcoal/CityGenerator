@@ -18,9 +18,11 @@ using namespace std;
 /*
 * Constructor for no heightmap
 *
-* input_img - input PNG into constructor
+* input - the input PNG that defines where the city is to go
 * grid_box_width - width of grid boxes
 * lr_bias - amount of bias to left/right vs up/down
+* x_corner - the x position of the top left corner of the city
+* z_corner - the z position of the top left corner of the city
 */
 City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner, int32_t z_corner)
 {   
@@ -38,11 +40,13 @@ City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner
 /*
 * Constructor for heightmap
 *
-* input_img - input PNG into constructor
+* input - the input PNG that defines where the city is to go
 * heightmap - heightmap input
 * grid_box_width - width of grid boxes
 * steps - number of discrete height levels that the output should have
 * lr_bias - amount of bias to left/right vs up/down
+* x_corner - the x position of the top left corner of the city
+* z_corner - the z position of the top left corner of the city
 */
 City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner, int32_t z_corner, PNG* heightmap, int32_t steps)
 {
@@ -1143,7 +1147,9 @@ void City::outputCity()
 /*
 * PrintGrid
 *
-* prints out the grid of the city prior to houses being placed
+* prints out the grid of the city to the specified image filepath
+* if placeHouses was called, then the image will contain the houses,
+* otherwise it will contain the city grid
 *
 */
 void City::printGrid(string const & filename)
