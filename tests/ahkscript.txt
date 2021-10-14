@@ -1,8 +1,0 @@
-^!s::
-
-Loop, read, C:\users\caleb\Projects\CityGenerator\tests\output.txt
-{
-	Send %A_LoopReadLine%
-	Sleep 1000
-	Send {Enter}
-}

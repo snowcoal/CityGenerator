@@ -2,343 +2,339 @@ tp @s -27 4 -94
 /pos1 -27,3,-84
 /pos2 -27,29,-103
 /copy -m !bedrock
-tp @s 759 4 556
+tp @s 689 4 444
 /paste -a
-tp @s 773 4 528
+tp @s 689 4 556
 /paste -a
-tp @s 703 4 528
+tp @s 731 4 500
 /paste -a
-tp @s 633 4 528
+tp @s 577 4 472
 /paste -a
-tp @s 619 4 528
+tp @s 731 4 528
 /paste -a
-tp @s 745 4 500
-/paste -a
-tp @s 717 4 500
-/paste -a
-tp @s 661 4 472
-/paste -a
-tp @s 591 4 444
-/paste -a
-tp @s 752 4 521
-/rotate 90
-/paste -a
-tp @s 752 4 507
-/paste -a
-tp @s 668 4 521
-/paste -a
-tp @s 584 4 507
-/paste -a
-tp @s 724 4 493
+tp @s 633 4 500
 /paste -a
 tp @s 640 4 465
-/paste -a
-tp @s 640 4 451
-/paste -a
-tp @s 584 4 451
+/rotate 90
 /paste -a
 tp @s -20 4 -94
 /pos1 -20,3,-84
 /pos2 -20,30,-103
 /copy -m !bedrock
-tp @s 703 4 500
+tp @s 591 4 444
 /paste -a
-tp @s 619 4 500
+tp @s 619 4 444
 /paste -a
-tp @s 605 4 500
+tp @s 619 4 528
 /paste -a
-tp @s 693 4 444
+tp @s 605 4 472
 /paste -a
-tp @s 605 4 444
+tp @s 745 4 500
 /paste -a
-tp @s 612 4 493
+tp @s 675 4 472
+/paste -a
+tp @s 675 4 500
+/paste -a
+tp @s 633 4 528
+/paste -a
+tp @s 717 4 472
+/paste -a
+tp @s 780 4 535
 /rotate 90
 /paste -a
-tp @s 696 4 535
-/paste -a
-tp @s 668 4 507
+tp @s 780 4 493
 /paste -a
 tp @s 584 4 521
 /paste -a
-tp @s 612 4 437
+tp @s 640 4 507
 /paste -a
-tp @s 724 4 479
+tp @s 640 4 451
 /paste -a
-tp @s 696 4 493
+tp @s 724 4 507
+/paste -a
+tp @s 696 4 549
+/paste -a
+tp @s 696 4 535
 /paste -a
 tp @s -13 4 -94
 /pos1 -13,3,-84
 /pos2 -13,30,-103
 /copy -m !bedrock
-tp @s 661 4 528
+tp @s 619 4 500
 /paste -a
-tp @s 639 4 528
+tp @s 759 4 556
 /paste -a
-tp @s 577 4 472
+tp @s 741 4 556
 /paste -a
-tp @s 633 4 500
+tp @s 647 4 500
 /paste -a
-tp @s 591 4 500
+tp @s 689 4 500
 /paste -a
-tp @s 703 4 556
+tp @s 731 4 556
 /paste -a
-tp @s 661 4 556
+tp @s 621 4 472
+/paste -a
+tp @s 591 4 472
+/paste -a
+tp @s 675 4 556
+/paste -a
+tp @s 675 4 444
 /paste -a
 tp @s 633 4 444
 /paste -a
-tp @s 717 4 472
+tp @s 577 4 500
 /paste -a
-tp @s 647 4 556
+tp @s 605 4 444
 /paste -a
-tp @s 703 4 444
+tp @s 745 4 528
 /paste -a
-tp @s 619 4 556
+tp @s 691 4 472
 /paste -a
-tp @s 647 4 472
-/paste -a
-tp @s 696 4 479
+tp @s 584 4 465
 /rotate 90
+/paste -a
+tp @s 612 4 437
+/paste -a
+tp @s 668 4 437
+/paste -a
+tp @s 752 4 521
+/paste -a
+tp @s 584 4 451
+/paste -a
+tp @s 584 4 507
+/paste -a
+tp @s 640 4 521
 /paste -a
 tp @s -5 4 -94
 /pos1 -5,3,-84
 /pos2 -5,30,-103
 /copy -m !bedrock
-tp @s 717 4 528
+tp @s 703 4 472
 /paste -a
-tp @s 577 4 500
-/paste -a
-tp @s 759 4 528
+tp @s 619 4 556
 /paste -a
 tp @s 759 4 472
 /paste -a
-tp @s 731 4 500
+tp @s 633 4 556
 /paste -a
-tp @s 717 4 556
+tp @s 633 4 472
 /paste -a
-tp @s 619 4 444
-/paste -a
-tp @s 675 4 444
-/paste -a
-tp @s 703 4 472
-/paste -a
-tp @s 627 4 556
-/paste -a
-tp @s 584 4 465
+tp @s 612 4 507
 /rotate 90
 /paste -a
-tp @s 612 4 479
+tp @s 612 4 521
 /paste -a
-tp @s 780 4 493
+tp @s 724 4 521
 /paste -a
-tp @s 696 4 549
+tp @s 752 4 507
 /paste -a
-tp @s 724 4 549
+tp @s 752 4 479
 /paste -a
-tp @s 668 4 437
-/paste -a
-tp @s 724 4 535
-/paste -a
-tp @s -36 4 -94
-/pos1 -38,3,-84
-/pos2 -34,27,-101
-/copy -m !bedrock
-tp @s 636 4 528
+tp @s 752 4 493
 /paste -a
 tp @s 0 4 0
 /pos1 0,0,0
 /pos2 0,0,0
 /copy -m !bedrock
-tp @s 623 4 556
+tp @s 736 4 556
 /paste -a
 tp @s 0 4 0
 /pos1 0,0,0
 /pos2 0,0,0
 /copy -m !bedrock
-tp @s 698 4 444
+tp @s 627 4 472
+/paste -a
+tp @s 697 4 472
 /paste -a
 tp @s -109 4 -138
 /pos1 -115,3,-128
 /pos2 -99,30,-144
 /copy -m !bedrock
-tp @s 752 4 528
-/paste -a
-tp @s 640 4 472
-/paste -a
-tp @s 584 4 444
+tp @s 752 4 472
 /rotate 90
 /paste -a
-tp @s 696 4 528
-/paste -a
-tp @s 696 4 472
-/paste -a
-tp @s 724 4 528
+tp @s 752 4 528
 /rotate -90
-/rotate 180
-/paste -a
-tp @s 724 4 556
-/rotate -180
 /rotate 270
+/paste -a
+tp @s 640 4 528
 /paste -a
 tp @s -45 4 -138
 /pos1 -39,28,-148
 /pos2 -51,3,-127
 /copy -m !bedrock
-tp @s 710 4 528
-/paste -a
-tp @s 654 4 472
-/paste -a
-tp @s 710 4 472
-/paste -a
-tp @s 654 4 556
+tp @s 626 4 556
 /paste -a
 tp @s 626 4 444
 /paste -a
-tp @s 766 4 528
-/paste -a
-tp @s 710 4 556
-/paste -a
 tp @s 738 4 500
 /paste -a
-tp @s 598 4 500
+tp @s 682 4 500
 /paste -a
-tp @s 696 4 542
+tp @s 626 4 500
+/paste -a
+tp @s 612 4 514
 /rotate 90
-/paste -a
-tp @s 724 4 542
-/paste -a
-tp @s 752 4 514
-/paste -a
-tp @s 696 4 486
 /paste -a
 tp @s 640 4 458
 /paste -a
 tp @s 584 4 514
 /paste -a
+tp @s 696 4 542
+/paste -a
 tp @s -18 4 -138
 /pos1 -24,3,-128
 /pos2 -12,28,-147
 /copy -m !bedrock
-tp @s 710 4 500
-/paste -a
 tp @s 626 4 528
+/paste -a
+tp @s 710 4 472
+/paste -a
+tp @s 738 4 528
+/paste -a
+tp @s 598 4 472
+/paste -a
+tp @s 682 4 556
 /paste -a
 tp @s 598 4 444
 /paste -a
-tp @s 626 4 500
+tp @s 682 4 444
 /paste -a
-tp @s 668 4 514
+tp @s 752 4 486
 /rotate 90
 /paste -a
-tp @s 724 4 486
+tp @s 640 4 514
 /paste -a
-tp @s 612 4 486
+tp @s 724 4 514
 /paste -a
 tp @s 584 4 458
+/paste -a
+tp @s 752 4 514
 /paste -a
 tp @s -177 4 -94
 /pos1 -171,31,-100
 /pos2 -188,3,-83
 /copy -m !bedrock
+tp @s 668 4 444
+/paste -a
+tp @s 724 4 528
+/paste -a
+tp @s 612 4 500
+/rotate 90
+/paste -a
+tp @s 584 4 444
+/paste -a
 tp @s 696 4 556
+/rotate -90
+/rotate 270
 /paste -a
 tp @s -151 4 -94
 /pos1 -161,3,-84
 /pos2 -145,28,-100
 /copy -m !bedrock
-tp @s 668 4 444
+tp @s 612 4 528
 /paste -a
-tp @s 696 4 500
+tp @s 724 4 500
+/rotate 90
 /paste -a
-tp @s 724 4 472
+tp @s 584 4 500
+/rotate -90
 /rotate 180
 /paste -a
 tp @s 640 4 444
 /paste -a
-tp @s 752 4 500
-/paste -a
-tp @s 584 4 472
+tp @s 640 4 472
 /rotate -180
 /rotate 270
-/paste -a
-tp @s 668 4 528
 /paste -a
 tp @s -81 4 -50
 /pos1 -75,3,-60
 /pos2 -87,43,-44
 /copy -m !bedrock
-tp @s 584 4 500
+tp @s 640 4 500
 /paste -a
-tp @s 724 4 500
+tp @s 752 4 500
+/rotate 90
+/paste -a
+tp @s 584 4 472
+/rotate -90
 /rotate 180
 /paste -a
 tp @s 612 4 444
-/paste -a
-tp @s 612 4 500
 /paste -a
 tp @s 0 4 0
 /pos1 0,0,0
 /pos2 0,0,0
 /copy -m !bedrock
-tp @s 668 4 430
-/paste -a
-tp @s 612 4 472
-/paste -a
-tp @s 780 4 486
-/paste -a
-tp @s 668 4 500
-/paste -a
 tp @s 612 4 430
-/paste -a
-tp @s 710 4 444
-/rotate 90
-/paste -a
-tp @s 668 4 472
-/paste -a
-tp @s 766 4 472
-/paste -a
-tp @s 640 4 500
-/paste -a
-tp @s 766 4 556
-/paste -a
-tp @s 668 4 556
 /paste -a
 tp @s 780 4 528
 /paste -a
-tp @s 584 4 528
+tp @s 696 4 528
+/paste -a
+tp @s 780 4 486
+/paste -a
+tp @s 668 4 430
+/paste -a
+tp @s 766 4 556
+/rotate 90
+/paste -a
+tp @s 640 4 556
+/paste -a
+tp @s 696 4 500
+/paste -a
+tp @s 766 4 472
+/paste -a
+tp @s 724 4 472
+/paste -a
+tp @s 696 4 444
+/paste -a
+tp @s 780 4 542
 /rotate -90
 /rotate 180
 /paste -a
+tp @s 584 4 528
+/paste -a
 tp @s 780 4 500
 /paste -a
-tp @s 570 4 472
+tp @s 724 4 556
 /rotate -180
 /rotate 270
 /paste -a
-tp @s 752 4 472
-/paste -a
-tp @s 570 4 500
-/paste -a
-tp @s 752 4 556
+tp @s 668 4 556
 /paste -a
 tp @s 612 4 556
 /paste -a
-tp @s 612 4 528
+tp @s 570 4 500
+/paste -a
+tp @s 668 4 472
+/paste -a
+tp @s 570 4 472
+/paste -a
+tp @s 0 4 0
+/pos1 0,0,0
+/pos2 0,0,0
+/copy -m !bedrock
+tp @s 668 4 528
+/rotate 90
+/paste -a
+tp @s -56 4 -94
+/pos1 -63,3,-84
+/pos2 -49,42,-103
+/copy -m !bedrock
+tp @s 613 4 472
+/paste -a
+tp @s 683 4 472
 /paste -a
 tp @s -84 4 -94
 /pos1 -92,3,-83
 /pos2 -76,28,-105
 /copy -m !bedrock
-tp @s 684 4 444
+tp @s 750 4 556
 /paste -a
-tp @s -167 4 -138
-/pos1 -158,29,-147
-/pos2 -176,3,-128
+tp @s -119 4 -94
+/pos1 -132,3,-84
+/pos2 -106,29,-103
 /copy -m !bedrock
-tp @s 637 4 556
-/paste -a
-tp @s -135 4 -138
-/pos1 -145,3,-128
-/pos2 -125,28,-148
-/copy -m !bedrock
-tp @s 650 4 528
+tp @s 661 4 500
 /paste -a
