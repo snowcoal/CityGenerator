@@ -22,7 +22,7 @@ using namespace std;
 * grid_box_width - width of grid boxes
 * lr_bias - amount of bias to left/right vs up/down
 */
-City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias)
+City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner, int32_t z_corner)
 {   
     // init basic private variables
     num_steps = 0;
@@ -30,6 +30,8 @@ City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias)
     input_img = input;
     grid_cell_size = grid_box_width;
     lrbias = lr_bias;
+    start_x = x_corner;
+    start_z = z_corner;
     init();
 }
 
@@ -42,7 +44,7 @@ City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias)
 * steps - number of discrete height levels that the output should have
 * lr_bias - amount of bias to left/right vs up/down
 */
-City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, int32_t steps)
+City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner, int32_t z_corner, PNG* heightmap, int32_t steps)
 {
     // init basic private variables
     num_steps = (double)steps;
@@ -50,6 +52,8 @@ City::City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, 
     input_img = input;
     grid_cell_size = grid_box_width;
     lrbias = lr_bias;
+    start_x = x_corner;
+    start_z = z_corner;
     init();
 }
 
@@ -103,7 +107,7 @@ void City::init()
             // the corner position needs to be -squarew,-squarew
             cell->pos_x = j * (grid_cell_size + GRID_SPACE) - (grid_cell_size);
             cell->pos_z = i * (grid_cell_size + GRID_SPACE) - (grid_cell_size);
-            cell->pos_y = 0;
+            cell->pos_y = 4;
             cell->i_index = i;
             cell->j_index = j;
             cell->visited = false;
@@ -1078,6 +1082,8 @@ void City::outputCity()
     fstream fp;
     fp.open("tests/output.txt", ios::out);
 
+    if(!fp) cout << "ERROR: could not write to output file" << endl;
+
     int32_t cur_ID = -69;
     int32_t cur_rot = -69;
     bool newCopyFlag = false;
@@ -1085,45 +1091,47 @@ void City::outputCity()
     for(auto house: houseList2){
         HouseSet::houseType* housePtr = house.house_ptr;
         int32_t houseID = housePtr->ID;
-        int32_t houseType = getCityHouseType(&house);
+        // int32_t houseType = getCityHouseType(&house);
         int32_t houseRot = house.rotation;
         // do this whenever a new houseID comes up
         if(houseID != cur_ID){
             cur_ID = houseID;
             // copy the next house in game
             // tp player to copy location
-            fp <<"/tp @s "<< housePtr->cpy_pt_x <<" "<< housePtr->cpy_pt_y <<" "<< housePtr->cpy_pt_z << endl;
+            fp <<"tp @s "<< housePtr->cpy_pt_x <<" "<< housePtr->cpy_pt_y <<" "<< housePtr->cpy_pt_z << endl;
             // set pos1
-            fp <<"//pos1 "<< housePtr->pos1_x <<" "<< housePtr->pos1_y <<" "<< housePtr->pos1_z << endl;
+            fp <<"/pos1 "<< housePtr->pos1_x <<","<< housePtr->pos1_y <<","<< housePtr->pos1_z << endl;
             // set pos2
-            fp <<"//pos2 "<< housePtr->pos2_x <<" "<< housePtr->pos2_y <<" "<< housePtr->pos2_z << endl;
+            fp <<"/pos2 "<< housePtr->pos2_x <<","<< housePtr->pos2_y <<","<< housePtr->pos2_z << endl;
             // do copy with no bedrock
-            fp <<"//copy -m !bedrock"<< endl;
+            fp <<"/copy -m !bedrock"<< endl;
 
             // set flag that new house was copied
             newCopyFlag = true;
         }
 
         // tp player to the paste location
-        fp <<"/tp @s "<< house.pos_x <<" "<< house.pos_y <<" "<< house.pos_z << endl;
+        fp <<"tp @s "<< house.pos_x + start_x <<" "<< house.pos_y <<" "<< house.pos_z + start_z << endl;
 
         // do this whenever a new rotation comes up
         if(houseRot != cur_rot){
             // dont neg rotate it the first time or if a house was just copied
             if(cur_rot != -69 && cur_rot != 0 && !newCopyFlag){
                 // rotate it by the old rotation in the negative direction
-                if(houseType == -2) fp <<"//rotate "<< cur_rot * -180 << endl;
-                else if(houseType >= 0) fp <<"//rotate "<< cur_rot * -90 << endl;
+                // if(houseType == -2) fp <<"/rotate "<< cur_rot * -180 << endl;
+                // else if(houseType >= 0) fp <<"/rotate "<< cur_rot * -90 << endl;
+                fp <<"/rotate "<< cur_rot * -90 << endl;
             }
             // rotate the house if needed
             if(houseRot != 0){
-                if(houseType == -2) fp <<"//rotate "<< houseRot * 180 << endl;
-                else if(houseType >= 0) fp <<"//rotate "<< houseRot * 90 << endl;
+                // if(houseType == -2) fp <<"/rotate "<< houseRot * 180 << endl;
+                // else if(houseType >= 0) fp <<"/rotate "<< houseRot * 90 << endl;
+                fp <<"/rotate "<< houseRot * 90 << endl;
             }
             cur_rot = houseRot;
         }
-        // paste the house in
-        fp <<"//paste"<< endl;
+        // paste the house in no air blocks
+        fp <<"/paste -a"<< endl;
 
         // reset new copy flag
         newCopyFlag = false;

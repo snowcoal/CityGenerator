@@ -114,8 +114,8 @@ class City
         };
 
         // // position of corner of city in the final map (needed later?)
-        // int32_t start_x;
-        // int32_t start_z;
+        int32_t start_x;
+        int32_t start_z;
 
         // number of cells in city
         int32_t cell_cnt;
@@ -202,10 +202,10 @@ class City
 
     public:
         // constructor for heightmap
-        City(PNG* input, int32_t grid_box_width, int32_t lr_bias, PNG* heightmap, int32_t steps);
+        City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner, int32_t z_corner, PNG* heightmap, int32_t steps);
 
         // constructor for no heightmap
-        City(PNG* input_img, int32_t grid_box_width, int32_t lr_bias);
+        City(PNG* input, int32_t grid_box_width, int32_t lr_bias, int32_t x_corner, int32_t z_corner);
 
         // prints out the city grid to input file
         void printGrid(string const & filename);
