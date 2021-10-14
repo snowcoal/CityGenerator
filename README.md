@@ -36,5 +36,19 @@ printGrid() can be called at any point after the initial construction, and can b
 If it is called before placeHouses(), it will display no houses, and only the grid, and if it is called after, it will display the houses overlayed on the grid.
 
 
+Notes:
+
+
+Yes I know that I probably wrote too many comments. I have borderline OCD when it comes to comments so thats my problem.
+
+Yes I know that the grid is overly complicated. And yes I know each grid cell stores its position within the image even though it doesnt need to, as I can just directly calculate each gridcell position.
+The reason why I did this was becuase originally I wanted the grid cells to be able to be moved, if the city is distorted. Now Ive realized that its probably better to distort the houses instead if I wish
+to add this functionality, but I'm not entirely sure. So for now, they will continue to store their current position in the event that I wish to be able to move them around. Also, all of the calculations
+related to gridcell positions are based off of the stored position, so removing this functionality would be annyoing.
+
+Also, Im aware that some parts of the program (such as edge detection and heightmap calculations) are brutally inefficient and I should be using a better method. I probably should be, but at the end of the
+day this program runs in under a second, and the resulting city takes over an hour to build inside minecraft by auto-running the commands. So the program is not the limiting factor here. Also, I did try to
+optimize the program whenever possible.
+
 
 
