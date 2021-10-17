@@ -1,4 +1,6 @@
 ^!s::
+;ctrl + shift + S
+
 
 Loop, read, C:\users\caleb\Projects\CityGenerator\tests\output.txt
 {
@@ -7,5 +9,5 @@ Loop, read, C:\users\caleb\Projects\CityGenerator\tests\output.txt
 	SendRaw %A_LoopReadLine%
 	Sleep 100
 	Send {Enter}
-	Sleep 1200
+	Sleep 1500
 }

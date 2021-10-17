@@ -111,7 +111,7 @@ void City::init()
             // the corner position needs to be -squarew,-squarew
             cell->pos_x = j * (grid_cell_size + GRID_SPACE) - (grid_cell_size);
             cell->pos_z = i * (grid_cell_size + GRID_SPACE) - (grid_cell_size);
-            cell->pos_y = 4;
+            cell->pos_y = DEFAULT_Y_HEIGHT;
             cell->i_index = i;
             cell->j_index = j;
             cell->visited = false;
@@ -641,22 +641,22 @@ void City::placeHouses(HouseSet* house_set)
                 // 1 neighbor
                 case 0b00000001:
                     cell->corner_type = 1;
-                    cell->corner_rotation = 0;
+                    cell->corner_rotation = 2;
                     cornerCells.push_back(cell);
                     break;
                 case 0b00000010:
                     cell->corner_type = 1;
-                    cell->corner_rotation = 2;
+                    cell->corner_rotation = 0;
                     cornerCells.push_back(cell);
                     break;
                 case 0b00000100:
                     cell->corner_type = 1;
-                    cell->corner_rotation = 3;
+                    cell->corner_rotation = 1;
                     cornerCells.push_back(cell);
                     break;
                 case 0b00001000:
                     cell->corner_type = 1;
-                    cell->corner_rotation = 1;
+                    cell->corner_rotation = 3;
                     cornerCells.push_back(cell);
                     break;
                 // 2 neighbors no corner
@@ -881,7 +881,7 @@ void City::assignHousesToLines(HouseSet* house_set)
 
             if(houses_left > 1){
                 // pick a random house of width >= grid_cell_size
-                HouseSet::houseType* houseID = house_set->pickRandHouseByWidth(-2, grid_cell_size, INT32_MAX);
+                HouseSet::houseType* houseID = house_set->pickRandHouseByWidth(-2, grid_cell_size + 1, INT32_MAX);
                 // add the first house
                 cityHouse* city_house = new cityHouse;
                 // assign its rotation and ID pointer

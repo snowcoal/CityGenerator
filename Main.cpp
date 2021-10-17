@@ -20,7 +20,7 @@ int main(){
     PNG heightmap;
     heightmap.readFromFile("tests/input_heightmap.png");
 
-    HouseSet houses("tests/input.csv");
+    HouseSet houses("tests/input_new.csv");
     // houses.printTree();
 
     // for(int i = 0; i < 30; i++){
