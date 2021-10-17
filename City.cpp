@@ -1112,6 +1112,9 @@ void City::outputCity()
 
             // set flag that new house was copied
             newCopyFlag = true;
+
+            // initialize current rotation to 0
+            cur_rot = 0;
         }
 
         // tp player to the paste location
@@ -1120,7 +1123,7 @@ void City::outputCity()
         // do this whenever a new rotation comes up
         if(houseRot != cur_rot){
             // dont neg rotate it the first time or if a house was just copied
-            if(cur_rot != -69 && cur_rot != 0 && !newCopyFlag){
+            if(cur_rot != 0 && !newCopyFlag){
                 // rotate it by the old rotation in the negative direction
                 // if(houseType == -2) fp <<"/rotate "<< cur_rot * -180 << endl;
                 // else if(houseType >= 0) fp <<"/rotate "<< cur_rot * -90 << endl;

@@ -36,7 +36,7 @@ int main(){
     city0.addRandomRoads(60);
     city0.placeHouses(&houses);
     city0.printGrid("tests/output.png");
-    // city0.outputCity();
+    city0.outputCity();
 
     // no heightmap input
     City city1(&input, 13, 10, 100, 100);
@@ -59,7 +59,7 @@ int main(){
     city3.addRandomRoads(60);
     city3.placeHouses(&houses);
     city3.printGrid("tests/output_small.png");
-    city3.outputCity();
+    // city3.outputCity();
 
 
 
