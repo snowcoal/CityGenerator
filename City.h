@@ -222,8 +222,11 @@ class City
         // // distorts the city (different architecture needed?)
         // void distortCity(int32_t dist);
 
-        // outputs house placements to file
+        // outputs city placements to file
         void outputCity();
+
+        // outputs city to worldedit CLI compatible file that doesnt require player teleportation
+        void outputCityNoTP();
 
 
         // Destructor
