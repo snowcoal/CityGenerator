@@ -1,3 +1,6 @@
+// 2021 snowcoal
+// header file for City Class
+
 #pragma once
 
 #include <iostream>
@@ -31,7 +34,7 @@ using std::endl;
 #define  BITMASK                0x03
 #define  BITMASK2               0x01
 #define  NUM_LOOP_PASSES        2
-#define  DEFAULT_Y_HEIGHT       21
+#define  DEFAULT_Y_HEIGHT       8
 
 // order array:
 /*  lr  p | 4th | 3rd | 2nd | 1st | bin encode  | hex

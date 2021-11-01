@@ -1,4 +1,4 @@
-// 2021 snowcoal.
+// 2021 snowcoal
 // Yeah i probably shouldve split this into more classes but whatever
 
 #include <iostream>
@@ -1055,7 +1055,7 @@ void City::addSplit(int32_t posx, int32_t posy, int32_t posz, int32_t rot, House
 /*
 * outputCity
 *
-* generates a set of worldedit commands to output the city
+* generates a set of worldedit commands to be run to generate the city. Requires player teleportation.
 *
 */
 void City::outputCity()
@@ -1136,14 +1136,10 @@ void City::outputCity()
             // dont neg rotate it the first time or if a house was just copied
             if(cur_rot != 0 && !newCopyFlag){
                 // rotate it by the old rotation in the negative direction
-                // if(houseType == -2) fp <<"/rotate "<< cur_rot * -180 << endl;
-                // else if(houseType >= 0) fp <<"/rotate "<< cur_rot * -90 << endl;
                 fp <<"/rotate "<< cur_rot * -90 << endl;
             }
             // rotate the house if needed
             if(houseRot != 0){
-                // if(houseType == -2) fp <<"/rotate "<< houseRot * 180 << endl;
-                // else if(houseType >= 0) fp <<"/rotate "<< houseRot * 90 << endl;
                 fp <<"/rotate "<< houseRot * 90 << endl;
             }
             cur_rot = houseRot;
@@ -1165,6 +1161,7 @@ void City::outputCity()
 * outputCity
 *
 * outputs the city in such a way that teleporting is not needed. Compatible with worldedit CLI
+* if extra slashes are added
 *
 */
 void City::outputCityNoTP()
@@ -1218,11 +1215,9 @@ void City::outputCityNoTP()
         HouseSet::houseType* housePtr = house.house_ptr;
         int32_t houseID = housePtr->ID;
         // get some tmp variables for later
-        int32_t cx = housePtr->cpy_pt_x;
-        int32_t cz = housePtr->cpy_pt_z;
-        int32_t px = housePtr->pos1_x;
-        int32_t py = housePtr->pos1_y;
-        int32_t pz = housePtr->pos1_z;
+        int32_t py = house.pos_y;
+        int32_t dx = abs(housePtr->cpy_pt_x - housePtr->pos1_x);
+        int32_t dz = abs(housePtr->cpy_pt_z - housePtr->pos1_z);
         // int32_t houseType = getCityHouseType(&house);
         int32_t houseRot = house.rotation;
 
@@ -1250,14 +1245,10 @@ void City::outputCityNoTP()
             // dont neg rotate it the first time or if a house was just copied
             if(cur_rot != 0 && !newCopyFlag){
                 // rotate it by the old rotation in the negative direction
-                // if(houseType == -2) fp <<"/rotate "<< cur_rot * -180 << endl;
-                // else if(houseType >= 0) fp <<"/rotate "<< cur_rot * -90 << endl;
                 fp <<"/rotate "<< cur_rot * -90 << endl;
             }
             // rotate the house if needed
             if(houseRot != 0){
-                // if(houseType == -2) fp <<"/rotate "<< houseRot * 180 << endl;
-                // else if(houseType >= 0) fp <<"/rotate "<< houseRot * 90 << endl;
                 fp <<"/rotate "<< houseRot * 90 << endl;
             }
             cur_rot = houseRot;
@@ -1269,22 +1260,22 @@ void City::outputCityNoTP()
             // 0 rotation
             case 0:
                 // add to z subtract from x
-                fp <<"/pos1 "<< (house.pos_x + start_x) - abs(cx - px) <<","<< 8 <<","<< (house.pos_z + start_z) + abs(cz - pz) << endl;
+                fp <<"/pos1 "<< (house.pos_x + start_x) - dx <<","<< py <<","<< (house.pos_z + start_z) + dz << endl;
                 break;
             // 90 rotation
             case 1:
                 // subtract from both
-                fp <<"/pos1 "<< (house.pos_x + start_x) - abs(cz - pz) <<","<< 8 <<","<< (house.pos_z + start_z) - abs(cx - px) << endl;
+                fp <<"/pos1 "<< (house.pos_x + start_x) - dz <<","<< py <<","<< (house.pos_z + start_z) - dx << endl;
                 break;
             // 180 rotation
             case 2:
                 // add to x subtract from z
-                fp <<"/pos1 "<< (house.pos_x + start_x) + abs(cx - px) <<","<< 8 <<","<< (house.pos_z + start_z) - abs(cz - pz) << endl;
+                fp <<"/pos1 "<< (house.pos_x + start_x) + dx <<","<< py <<","<< (house.pos_z + start_z) - dz << endl;
                 break;
             // 270 rotation
             case 3:
                 // add to both
-                fp <<"/pos1 "<< (house.pos_x + start_x) + abs(cz - pz) <<","<< 8 <<","<< (house.pos_z + start_z) + abs(cx - px) << endl;
+                fp <<"/pos1 "<< (house.pos_x + start_x) + dz <<","<< py <<","<< (house.pos_z + start_z) + dx << endl;
                 break;
         }
 
@@ -1332,44 +1323,6 @@ void City::printGrid(string const & filename)
             // house
             case 2:
                 color = RED_PX;
-                // switch (cell->corner_type){
-                //     case -2:
-                //         color = RED_PX;
-                //         break;
-                //     case 0:
-                //         color = BLU_PX;
-                //         break;
-                //     case 1:
-                //         color = BLU_PX;
-                //         break;
-                //     case 2:
-                //         color = RED_PX;
-                //         break;
-                //     case 3:
-                //         color = RED_PX;
-                //         break;
-                //     case 4:
-                //         color = BLU_PX;
-                //         break;
-                // }
-
-                // switch (cell->corner_rotation){
-                //     case 0:
-                //         color = RED_PX;
-                //         break;
-                //     case 1:
-                //         color = RED_PX;
-                //         break;
-                //     case 2:
-                //         color = RED_PX;
-                //         break;
-                //     case 3:
-                //         color = BLU_PX;
-                //         break;
-                //     default:
-                //         color = RED_PX;
-                //         break;
-                // }
                 break;
             // border
             case 3:

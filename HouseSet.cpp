@@ -1,3 +1,6 @@
+// 2021 snowcoal
+// holds set of houses based off of pre-built houses in the game
+
 #include <iostream>
 #include <fstream>
 #include <map>

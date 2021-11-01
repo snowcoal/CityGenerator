@@ -1,3 +1,6 @@
+// 2021 snowcoal
+// header file for HouseSet Class
+
 #pragma once
 
 #include <map>

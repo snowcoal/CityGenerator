@@ -1,3 +1,6 @@
+// 2021 snowcoal
+// I should probably add a CUI...
+
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
