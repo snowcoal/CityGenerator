@@ -172,7 +172,7 @@ class City
         void init();
 
         // sets the maze height to the input heightmap (angles over some limit become dropoffs)
-        void setCityHeight();
+        void setCityHeight(int32_t stepSize);
 
         // generates the road "maze" of the city
         int32_t generateRoads();

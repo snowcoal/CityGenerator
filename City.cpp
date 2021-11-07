@@ -161,7 +161,7 @@ void City::init()
 
     // set height of city if needed
     if(heightmap_img != NULL){
-        setCityHeight();
+        setCityHeight(1);
     }
 
     // set the type of each cell prior to maze generation
@@ -199,10 +199,10 @@ void City::init()
                     cell->type = 1;
                 }
                 // set it as a cliff if enough surrounding cells are different height and its not a border
-                if((double)(height_cnt) / NUM_ADJ > HEIGHT_PCT && cell->type != 3){
-                    cell->isCliff = true;
-                    // cell->type = 5;
-                }
+                // if((double)(height_cnt) / NUM_ADJ > HEIGHT_PCT && cell->type != 3){
+                //     cell->isCliff = true;
+                //     // cell->type = 5;
+                // }
             }
         }
     }
@@ -220,7 +220,7 @@ void City::init()
 * sets the height of the city to input heightmap
 *
 */
-void City::setCityHeight()
+void City::setCityHeight(int32_t stepSize)
 {
     double grid_cell_area = (double)pow(grid_cell_size,2);
     double max_avg = 0.0;
@@ -254,11 +254,26 @@ void City::setCityHeight()
     // loop cells again and set yheights
     for(auto cell: *cityCells){
         // scale average by range and truncate
-        cell->pos_y = (int)floor((num_steps*(cell->avg_lum - min_avg))/range);
+        cell->pos_y += (int)floor((num_steps*(cell->avg_lum - min_avg))/range) * stepSize;
         // assertion check
-        assert(cell->pos_y >= 0 && cell->pos_y <= num_steps);
+        // assert(cell->pos_y >= 0 && cell->pos_y <= num_steps);
     }
 }
+
+// smooth city to terrain
+
+// cannot have a height differrence of >1 between each house
+
+// steps:
+
+// 1. start with random cell
+
+// 2. get BFS of all houses in current height area (edges are cliffs and walls)
+
+// 2a. if cell has less average luminance than previous, then decrease height
+// 2b. else increase height
+
+
 
 /*
 * generateRoads

@@ -58,11 +58,12 @@ int main(){
     // city2.placeHouses(&houses);
     // city2.printGrid("tests/output2.png");
     
-    // // yes heightmap input
-    // City hcity(&input, 13, 20, 100, 100, &heightmap, 2);
-    // hcity.addRandomRoads(40);
-    // hcity.placeHouses(&houses);
-    // hcity.printGrid("tests/output_heightmap.png");
+    // yes heightmap input
+    City hcity(&input, 13, 70, 100, 100, &heightmap, 10);
+    hcity.addRandomRoads(60);
+    hcity.placeHouses(&houses);
+    hcity.printGrid("tests/output_heightmap.png");
+    hcity.outputCityNoTP();
 
     // City city3(&input2, 13, 70, 100, 100);
     // city3.addRandomRoads(60);
@@ -77,12 +78,12 @@ int main(){
     // cityCursed.printGrid("tests/outputCursed.png");
     // cityCursed.outputCity();
 
-    // no heightmap input
-    City citylg(&large, 13, 70, 100, 100);
-    citylg.addRandomRoads(60);
-    citylg.placeHouses(&houses);
-    citylg.printGrid("tests/outputLarge.png");
-    citylg.outputCityNoTP();
+    // // no heightmap input
+    // City citylg(&large, 13, 70, 100, 100);
+    // citylg.addRandomRoads(60);
+    // citylg.placeHouses(&houses);
+    // citylg.printGrid("tests/outputLarge.png");
+    // citylg.outputCityNoTP();
 
 
 
